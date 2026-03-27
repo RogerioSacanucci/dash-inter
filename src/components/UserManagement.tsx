@@ -16,7 +16,7 @@ export default function UserManagement() {
     setLoading(true);
     setError(null);
     api.adminUsers()
-      .then(({ users }) => setUsers(users))
+      .then(({ data }) => setUsers(data))
       .catch((err) => setError(err instanceof Error ? err.message : 'Erro ao carregar utilizadores.'))
       .finally(() => setLoading(false));
   }, []);

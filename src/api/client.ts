@@ -42,16 +42,25 @@ export interface AdminUser {
   created_at: string;
 }
 
+export interface AdminUsersResponse {
+  data: AdminUser[];
+  meta: { total: number; page: number; per_page: number; pages: number };
+}
+
 export interface CreateUserPayload {
   email: string;
   password: string;
-  payer_email: string;
-  payer_name: string;
+  payer_email?: string;
+  payer_name?: string;
   role: string;
   cartpanda_param?: string | null;
+  success_url?: string;
+  failed_url?: string;
+  pushcut_url?: string;
+  pushcut_notify?: string;
 }
 
-export type UpdateUserPayload = Partial<CreateUserPayload> & { active?: boolean };
+export type UpdateUserPayload = Partial<Omit<CreateUserPayload, 'password'> & { active: boolean }>;
 
 export interface Transaction {
   transaction_id: string;
@@ -195,7 +204,8 @@ export const api = {
 
   users: () => request<{ users: AdminUser[] }>("/api/auth/users"),
 
-  adminUsers: () => request<{ users: AdminUser[] }>("/api/admin/users"),
+  adminUsers: (page = 1) =>
+    request<AdminUsersResponse>(`/api/admin/users?page=${page}`),
 
   adminCreateUser: (payload: CreateUserPayload) =>
     request<{ user: AdminUser }>("/api/admin/users", {
