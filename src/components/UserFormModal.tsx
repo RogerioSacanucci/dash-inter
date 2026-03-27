@@ -150,7 +150,6 @@ export default function UserFormModal({ user, onClose, onSave }: UserFormModalPr
             <input
               id="uf-payer-name"
               type="text"
-              required
               value={payerName}
               onChange={(e) => setPayerName(e.target.value)}
               placeholder="Nome completo"
@@ -165,7 +164,6 @@ export default function UserFormModal({ user, onClose, onSave }: UserFormModalPr
             <input
               id="uf-payer-email"
               type="email"
-              required
               value={payerEmail}
               onChange={(e) => setPayerEmail(e.target.value)}
               placeholder="payer@example.com"
