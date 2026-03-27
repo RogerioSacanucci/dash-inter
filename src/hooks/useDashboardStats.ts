@@ -35,11 +35,13 @@ export function useDashboardStats({
 
   useEffect(() => {
     if (period === 'custom' && (!dateFrom || !dateTo)) return;
+    let cancelled = false;
 
     setLoading(true);
     setError(null);
 
     if (activePlatform === 'waymb') {
+      setCpStats(null);
       api
         .stats(
           period,
@@ -47,10 +49,11 @@ export function useDashboardStats({
           dateTo || undefined,
           selectedAccount ? Number(selectedAccount) : undefined,
         )
-        .then(setStats)
-        .catch((e) => setError(e.message))
-        .finally(() => setLoading(false));
+        .then((data) => { if (!cancelled) setStats(data); })
+        .catch((e) => { if (!cancelled) setError(e.message); })
+        .finally(() => { if (!cancelled) setLoading(false); });
     } else {
+      setStats(null);
       api
         .cartpandaStats(
           period,
@@ -58,10 +61,12 @@ export function useDashboardStats({
           dateTo || undefined,
           selectedAccount || undefined,
         )
-        .then(setCpStats)
-        .catch((e) => setError(e.message))
-        .finally(() => setLoading(false));
+        .then((data) => { if (!cancelled) setCpStats(data); })
+        .catch((e) => { if (!cancelled) setError(e.message); })
+        .finally(() => { if (!cancelled) setLoading(false); });
     }
+
+    return () => { cancelled = true; };
   }, [activePlatform, period, dateFrom, dateTo, selectedAccount, retryCount]);
 
   return { activePlatform, setActivePlatform, stats, cpStats, loading, error };
