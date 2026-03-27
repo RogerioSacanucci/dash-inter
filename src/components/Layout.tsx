@@ -2,41 +2,78 @@ import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
-const NAV_LINKS = [
-  {
-    to: '/', label: 'Dashboard', end: true,
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-        <rect x="1" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".9"/>
-        <rect x="9" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".9"/>
-        <rect x="1" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".9"/>
-        <rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".9"/>
-      </svg>
-    ),
-  },
-  {
-    to: '/transactions', label: 'Transações', end: false,
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-        <path d="M2 5h12M10 2l3 3-3 3M14 11H2M6 8l-3 3 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    ),
-  },
-  {
-    to: '/settings', label: 'Configurações', end: false,
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-        <circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="M8 1v2M8 13v2M1 8h2M13 8h2M2.93 2.93l1.41 1.41M11.66 11.66l1.41 1.41M2.93 13.07l1.41-1.41M11.66 4.34l1.41-1.41" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      </svg>
-    ),
-  },
-];
+const DashboardIcon = (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <rect x="1" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".9"/>
+    <rect x="9" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".9"/>
+    <rect x="1" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".9"/>
+    <rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".9"/>
+  </svg>
+);
+
+const TransactionsIcon = (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <path d="M2 5h12M10 2l3 3-3 3M14 11H2M6 8l-3 3 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const CartIcon = (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <path d="M1 1h2l1.5 8h8L15 3H4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <circle cx="6" cy="13" r="1.5" fill="currentColor"/>
+    <circle cx="11" cy="13" r="1.5" fill="currentColor"/>
+  </svg>
+);
+
+const SettingsIcon = (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
+    <path d="M8 1v2M8 13v2M1 8h2M13 8h2M2.93 2.93l1.41 1.41M11.66 11.66l1.41 1.41M2.93 13.07l1.41-1.41M11.66 4.34l1.41-1.41" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+  </svg>
+);
+
+function GroupHeader({ label }: { label: string }) {
+  return (
+    <p className="px-3 pt-3 pb-1 text-[9px] font-semibold uppercase tracking-widest text-white/25 select-none">
+      {label}
+    </p>
+  );
+}
+
+function NavItem({ to, label, end, icon, onClick }: {
+  to: string;
+  label: string;
+  end: boolean;
+  icon: React.ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <NavLink
+      to={to}
+      end={end}
+      onClick={onClick}
+      className={({ isActive }) =>
+        `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0 ${
+          isActive
+            ? 'bg-white/[0.06] text-white border-2 border-brand'
+            : 'text-white/40 hover:text-white/70 hover:bg-white/[0.04] border-2 border-transparent'
+        }`
+      }
+    >
+      {icon}
+      {label}
+    </NavLink>
+  );
+}
 
 export default function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const isAdmin = user?.role === 'admin';
+  const hasWayMb = isAdmin || !!user?.payer_email;
+  const hasCartpanda = isAdmin || !!user?.cartpanda_param;
 
   function handleLogout() {
     logout();
@@ -74,29 +111,27 @@ export default function Layout() {
 
         {/* Nav */}
         <nav aria-label="Navegação principal" className="flex-1 px-3 py-2 flex flex-col gap-0.5 overflow-y-auto">
-          {NAV_LINKS.map(({ to, label, end, icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              onClick={closeSidebar}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0 ${
-                  isActive
-                    ? 'bg-white/[0.06] text-white border-2 border-brand'
-                    : 'text-white/40 hover:text-white/70 hover:bg-white/[0.04] border-2 border-transparent'
-                }`
-              }
-            >
-              {icon}
-              {label}
-            </NavLink>
-          ))}
+          <NavItem to="/" label="Dashboard" end icon={DashboardIcon} onClick={closeSidebar} />
+
+          {hasWayMb && (
+            <div className="pl-2">
+              <GroupHeader label="WayMB" />
+              <NavItem to="/transactions" label="Transações" end={false} icon={TransactionsIcon} onClick={closeSidebar} />
+            </div>
+          )}
+
+          {hasCartpanda && (
+            <div className="pl-2">
+              <GroupHeader label="Cartpanda" />
+              <NavItem to="/cartpanda-orders" label="Pedidos" end={false} icon={CartIcon} onClick={closeSidebar} />
+            </div>
+          )}
         </nav>
 
-        {/* User */}
-        <div className="px-4 py-4 border-t border-white/[0.06] shrink-0">
-          <p className="text-xs text-white/30 truncate mb-2">{user?.email}</p>
+        {/* Bottom section */}
+        <div className="px-3 py-4 border-t border-white/[0.06] shrink-0 flex flex-col gap-0.5">
+          <NavItem to="/settings" label="Configurações" end={false} icon={SettingsIcon} onClick={closeSidebar} />
+          <p className="text-xs text-white/30 truncate mt-2 px-3">{user?.email}</p>
           <button
             onClick={handleLogout}
             aria-label="Terminar sessão"
