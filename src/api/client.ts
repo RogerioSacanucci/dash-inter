@@ -36,7 +36,22 @@ export interface AdminUser {
   email: string;
   payer_email: string;
   payer_name: string;
+  role: string;
+  cartpanda_param: string | null;
+  active: boolean;
+  created_at: string;
 }
+
+export interface CreateUserPayload {
+  email: string;
+  password: string;
+  payer_email: string;
+  payer_name: string;
+  role: string;
+  cartpanda_param?: string | null;
+}
+
+export type UpdateUserPayload = Partial<CreateUserPayload> & { active?: boolean };
 
 export interface Transaction {
   transaction_id: string;
@@ -179,6 +194,25 @@ export const api = {
   },
 
   users: () => request<{ users: AdminUser[] }>("/api/auth/users"),
+
+  adminUsers: () => request<{ users: AdminUser[] }>("/api/admin/users"),
+
+  adminCreateUser: (payload: CreateUserPayload) =>
+    request<{ user: AdminUser }>("/api/admin/users", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  adminUpdateUser: (id: number, payload: UpdateUserPayload) =>
+    request<{ user: AdminUser }>(`/api/admin/users/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+
+  adminDeleteUser: (id: number) =>
+    request<{ success: boolean }>(`/api/admin/users/${id}`, {
+      method: "DELETE",
+    }),
 
   updateSettings: (data: {
     pushcut_url: string;
