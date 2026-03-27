@@ -25,6 +25,13 @@ const CartIcon = (
   </svg>
 );
 
+const LinksIcon = (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <path d="M6.5 9.5a3.5 3.5 0 0 0 5 0l2-2a3.5 3.5 0 0 0-5-5l-1 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M9.5 6.5a3.5 3.5 0 0 0-5 0l-2 2a3.5 3.5 0 0 0 5 5l1-1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
 const SettingsIcon = (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
     <circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
@@ -126,6 +133,8 @@ export default function Layout() {
               <NavItem to="/cartpanda-orders" label="Pedidos" end={false} icon={CartIcon} onClick={closeSidebar} />
             </div>
           )}
+
+          <NavItem to="/links" label="Links" end={false} icon={LinksIcon} onClick={closeSidebar} />
 
         </nav>
 

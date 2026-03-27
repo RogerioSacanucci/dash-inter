@@ -6,6 +6,7 @@ import Transactions from './pages/Transactions';
 import CartpandaOrders from './pages/CartpandaOrders';
 import Settings from './pages/Settings';
 import Links from './pages/Links';
+import LinkEditor from './pages/LinkEditor';
 import Layout from './components/Layout';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -34,6 +35,14 @@ export default function App() {
           <Route path="settings" element={<Settings />} />
           <Route path="links" element={<Links />} />
         </Route>
+        <Route
+          path="/links/:id/edit"
+          element={
+            <AuthGuard>
+              <LinkEditor />
+            </AuthGuard>
+          }
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
