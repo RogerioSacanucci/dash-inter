@@ -1,0 +1,55 @@
+import type { CartpandaStatsResponse } from '../api/client';
+
+interface Metric {
+  label: string;
+  value: string;
+  sub?: string;
+  valueColor?: string;
+}
+
+function MetricCell({ label, value, sub, valueColor = 'text-white' }: Metric) {
+  return (
+    <div className="flex-1 px-5 first:pl-0 last:pr-0 flex flex-col gap-1.5 min-w-0">
+      <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest">{label}</p>
+      <p className={`text-2xl font-bold tracking-tight tabular-nums leading-none ${valueColor}`}>
+        {value}
+      </p>
+      {sub && <p className="text-[11px] text-white/30">{sub}</p>}
+    </div>
+  );
+}
+
+interface Props {
+  overview: CartpandaStatsResponse['overview'];
+}
+
+export default function CartpandaStatsCards({ overview }: Props) {
+  const fmt = (n: number) =>
+    '$\u00a0' + n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+  const metrics: Metric[] = [
+    { label: 'Volume', value: fmt(overview.total_volume), valueColor: 'text-brand' },
+    { label: 'Pedidos', value: overview.total_orders.toString(), sub: `${overview.pending} pendentes` },
+    { label: 'Completos', value: overview.completed.toString(), valueColor: 'text-emerald-400' },
+    { label: 'Reembolsos', value: overview.refunded.toString(), valueColor: 'text-purple-400' },
+    { label: 'Chargebacks', value: overview.declined.toString(), valueColor: 'text-orange-400' },
+  ];
+
+  return (
+    <div className="bg-surface-1 rounded-2xl border border-white/[0.06] px-6 py-5">
+      {/* Desktop: single row with dividers */}
+      <div className="hidden sm:flex items-start divide-x divide-white/[0.06]">
+        {metrics.map((m) => (
+          <MetricCell key={m.label} {...m} />
+        ))}
+      </div>
+
+      {/* Mobile: 2-col grid */}
+      <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:hidden">
+        {metrics.map((m) => (
+          <MetricCell key={m.label} {...m} />
+        ))}
+      </div>
+    </div>
+  );
+}
