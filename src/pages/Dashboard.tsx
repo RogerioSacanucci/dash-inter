@@ -34,6 +34,12 @@ export default function Dashboard() {
     useDashboardStats({ period, dateFrom, dateTo, selectedAccount, retryCount });
 
   useEffect(() => {
+    if (!hasWayMb && hasCartpanda) {
+      setActivePlatform('cartpanda');
+    }
+  }, [hasWayMb, hasCartpanda, setActivePlatform]);
+
+  useEffect(() => {
     document.title = 'Dashboard — StatsChecker';
   }, []);
 
