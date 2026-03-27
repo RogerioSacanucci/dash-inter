@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { api, StatsResponse, AdminUser } from '../api/client';
+import { api, AdminUser } from '../api/client';
 import { useAuth } from '../hooks/useAuth';
+import { useDashboardStats } from '../hooks/useDashboardStats';
 import StatsCards from '../components/StatsCards';
+import CartpandaStatsCards from '../components/CartpandaStatsCards';
 import Chart from '../components/Chart';
 
 const QUICK_PERIODS = [
@@ -19,12 +21,17 @@ export default function Dashboard() {
   const [dateFrom, setDateFrom]     = useState('');
   const [dateTo, setDateTo]         = useState('');
   const [showCustom, setShowCustom] = useState(false);
-  const [stats, setStats]           = useState<StatsResponse | null>(null);
-  const [loading, setLoading]       = useState(true);
-  const [error, setError]           = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   const [accounts, setAccounts]             = useState<AdminUser[]>([]);
-  const [selectedAccount, setSelectedAccount] = useState<number | undefined>(undefined);
+  const [selectedAccount, setSelectedAccount] = useState<string>('');
+
+  const hasWayMb = isAdmin || !!user?.payer_email;
+  const hasCartpanda = isAdmin || !!user?.cartpanda_param;
+  const showToggle = hasWayMb && hasCartpanda;
+
+  const { activePlatform, setActivePlatform, stats, cpStats, loading, error } =
+    useDashboardStats({ period, dateFrom, dateTo, selectedAccount, retryCount });
 
   useEffect(() => {
     document.title = 'Dashboard — StatsChecker';
@@ -35,16 +42,6 @@ export default function Dashboard() {
       api.users().then(({ users }) => setAccounts(users)).catch(() => {});
     }
   }, [isAdmin]);
-
-  useEffect(() => {
-    if (period === 'custom' && (!dateFrom || !dateTo)) return;
-    setLoading(true);
-    setError(null);
-    api.stats(period, dateFrom || undefined, dateTo || undefined, selectedAccount)
-      .then(setStats)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, [period, dateFrom, dateTo, selectedAccount]);
 
   function selectPeriod(value: string) {
     setPeriod(value);
@@ -58,15 +55,6 @@ export default function Dashboard() {
     setPeriod('custom');
   }
 
-  function retry() {
-    setError(null);
-    setLoading(true);
-    api.stats(period, dateFrom || undefined, dateTo || undefined, selectedAccount)
-      .then(setStats)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }
-
   const ov = stats?.overview;
 
   return (
@@ -78,7 +66,7 @@ export default function Dashboard() {
           <p className="text-sm text-white/40 mt-0.5">
             {isAdmin
               ? selectedAccount
-                ? `Conta: ${accounts.find((a) => a.id === selectedAccount)?.email ?? ''}`
+                ? `Conta: ${accounts.find((a) => a.id === Number(selectedAccount))?.email ?? ''}`
                 : 'Visão geral de todas as contas'
               : 'Visão geral dos seus pagamentos'}
           </p>
@@ -88,8 +76,8 @@ export default function Dashboard() {
           {/* Admin account selector */}
           {isAdmin && accounts.length > 0 && (
             <select
-              value={selectedAccount ?? ''}
-              onChange={(e) => setSelectedAccount(e.target.value ? Number(e.target.value) : undefined)}
+              value={selectedAccount}
+              onChange={(e) => setSelectedAccount(e.target.value)}
               className="bg-surface-1 border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition-colors"
             >
               <option value="">Todas as contas</option>
@@ -99,6 +87,34 @@ export default function Dashboard() {
                 </option>
               ))}
             </select>
+          )}
+
+          {/* Platform toggle */}
+          {showToggle && (
+            <div className="flex bg-surface-1 border border-white/[0.06] rounded-lg p-1 gap-0.5">
+              <button
+                type="button"
+                onClick={() => setActivePlatform('waymb')}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0 ${
+                  activePlatform === 'waymb'
+                    ? 'bg-brand text-white shadow-sm'
+                    : 'text-white/40 hover:text-white/70'
+                }`}
+              >
+                ⇄ WayMB
+              </button>
+              <button
+                type="button"
+                onClick={() => setActivePlatform('cartpanda')}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0 ${
+                  activePlatform === 'cartpanda'
+                    ? 'bg-white/[0.08] text-white shadow-sm'
+                    : 'text-white/40 hover:text-white/70'
+                }`}
+              >
+                🛒 Cartpanda
+              </button>
+            </div>
           )}
 
           {/* Period selector */}
@@ -155,7 +171,7 @@ export default function Dashboard() {
         <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-sm text-red-400 flex items-center justify-between gap-4">
           <span>{error}</span>
           <button
-            onClick={retry}
+            onClick={() => setRetryCount((c) => c + 1)}
             className="shrink-0 font-semibold underline underline-offset-2 hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded"
           >
             Tentar novamente
@@ -165,7 +181,7 @@ export default function Dashboard() {
 
       {loading ? (
         <div className="flex justify-center py-16 text-white/20 text-sm">Carregando...</div>
-      ) : stats ? (
+      ) : activePlatform === 'waymb' && stats ? (
         <>
           <StatsCards overview={stats.overview} />
 
@@ -256,6 +272,34 @@ export default function Dashboard() {
                 <p className="text-xs text-white/30 mt-1">{m.count} transações</p>
               </div>
             ))}
+          </div>
+        </>
+      ) : activePlatform === 'cartpanda' && cpStats ? (
+        <>
+          <CartpandaStatsCards overview={cpStats.overview} />
+
+          {/* Volume chart — Cartpanda */}
+          <div className="bg-surface-1 rounded-2xl border border-white/[0.06] p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-white">
+                {cpStats.hourly ? 'Pedidos por Hora' : 'Volume de Pedidos'}
+              </h2>
+              <div className="flex items-center gap-4 text-xs text-white/30">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-0.5 bg-brand inline-block rounded" />
+                  Volume ($)
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-0 inline-block border-t-2 border-dashed border-indigo-400" />
+                  Pedidos
+                </span>
+              </div>
+            </div>
+            <Chart
+              data={cpStats.chart.map((d) => ({ ...d, transactions: d.orders }))}
+              hourly={cpStats.hourly}
+              secondaryLabel="pedidos"
+            />
           </div>
         </>
       ) : null}
