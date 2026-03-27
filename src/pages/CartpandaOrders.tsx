@@ -1,17 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
-import { api, Transaction, TransactionsResponse, AdminUser } from '../api/client';
+import { api, CartpandaOrdersResponse, AdminUser } from '../api/client';
 import { useAuth } from '../hooks/useAuth';
-import TransactionTable from '../components/TransactionTable';
+import CartpandaOrderTable from '../components/CartpandaOrderTable';
 import { periodToDates } from '../utils/dates';
 
-const STATUSES = ['', 'PENDING', 'COMPLETED', 'FAILED', 'EXPIRED', 'DECLINED'];
+const STATUSES = ['', 'PENDING', 'COMPLETED', 'FAILED', 'DECLINED', 'REFUNDED'];
 const STATUS_LABELS: Record<string, string> = {
   '':        'Todos',
   PENDING:   'Pendente',
-  COMPLETED: 'Concluída',
-  FAILED:    'Falhada',
-  EXPIRED:   'Expirada',
-  DECLINED:  'Recusada',
+  COMPLETED: 'Concluído',
+  FAILED:    'Falhado',
+  DECLINED:  'Recusado',
+  REFUNDED:  'Reembolsado',
 };
 
 const QUICK_PERIODS = [
@@ -21,19 +21,18 @@ const QUICK_PERIODS = [
   { label: '30 dias', value: '30d'       },
 ];
 
-export default function Transactions() {
+export default function CartpandaOrders() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
 
-  const [data, setData] = useState<TransactionsResponse | null>(null);
+  const [data, setData] = useState<CartpandaOrdersResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [status, setStatus] = useState('');
-  const [method, setMethod] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-  const [txId, setTxId] = useState('');
+  const [orderId, setOrderId] = useState('');
   const [page, setPage] = useState(1);
   const [period, setPeriod] = useState('');
   const [showCustom, setShowCustom] = useState(false);
@@ -42,7 +41,7 @@ export default function Transactions() {
   const [selectedAccount, setSelectedAccount] = useState('');
 
   useEffect(() => {
-    document.title = 'Transações — StatsChecker';
+    document.title = 'Pedidos Cartpanda — StatsChecker';
   }, []);
 
   useEffect(() => {
@@ -57,17 +56,16 @@ export default function Transactions() {
 
     const params: Record<string, string> = { page: String(page) };
     if (status) params.status = status;
-    if (method) params.method = method;
     if (dateFrom) params.date_from = dateFrom;
     if (dateTo) params.date_to = dateTo;
-    if (txId.trim()) params.transaction_id = txId.trim();
+    if (orderId.trim()) params.order_id = orderId.trim();
     if (isAdmin && selectedAccount) params.user_id = selectedAccount;
 
-    api.transactions(params)
+    api.cartpandaOrders(params)
       .then(setData)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [status, method, dateFrom, dateTo, txId, page, isAdmin, selectedAccount]);
+  }, [status, dateFrom, dateTo, orderId, page, isAdmin, selectedAccount]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -94,10 +92,9 @@ export default function Transactions() {
 
   function clearFilters() {
     setStatus('');
-    setMethod('');
     setDateFrom('');
     setDateTo('');
-    setTxId('');
+    setOrderId('');
     setSelectedAccount('');
     setPeriod('');
     setShowCustom(false);
@@ -113,9 +110,9 @@ export default function Transactions() {
       {/* Header + Filters */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-white">Transações</h1>
+          <h1 className="text-xl font-bold text-white">Pedidos Cartpanda</h1>
           <p className="text-sm text-white/40 mt-0.5">
-            {data ? `${data.meta.total} transações encontradas` : ''}
+            {data ? `${data.meta.total} pedidos encontrados` : ''}
           </p>
         </div>
 
@@ -138,10 +135,10 @@ export default function Transactions() {
 
           <input
             type="text"
-            value={txId}
-            onChange={(e) => setTxId(e.target.value)}
-            placeholder="ID da transação..."
-            aria-label="ID da transação"
+            value={orderId}
+            onChange={(e) => setOrderId(e.target.value)}
+            placeholder="ID do pedido..."
+            aria-label="ID do pedido"
             className={`${inputCls} w-40 placeholder:text-white/20`}
           />
 
@@ -154,17 +151,6 @@ export default function Transactions() {
             {STATUSES.map((s) => (
               <option key={s} value={s}>{STATUS_LABELS[s]}</option>
             ))}
-          </select>
-
-          <select
-            value={method}
-            onChange={(e) => setMethod(e.target.value)}
-            aria-label="Método"
-            className={inputCls}
-          >
-            <option value="">Todos</option>
-            <option value="mbway">MB WAY</option>
-            <option value="multibanco">Multibanco</option>
           </select>
 
           <div className="flex bg-surface-1 border border-white/[0.06] rounded-lg p-1 gap-0.5">
@@ -215,7 +201,7 @@ export default function Transactions() {
             </>
           )}
 
-          {(status || method || period || txId || selectedAccount) && (
+          {(status || period || orderId || selectedAccount) && (
             <button
               type="button"
               onClick={clearFilters}
@@ -241,7 +227,7 @@ export default function Transactions() {
           </div>
         ) : (
           <>
-            <TransactionTable transactions={data?.data ?? []} loading={loading} />
+            <CartpandaOrderTable orders={data?.data ?? []} loading={loading} />
 
             {/* Pagination */}
             {totalPages > 1 && (
