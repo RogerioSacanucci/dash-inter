@@ -62,6 +62,37 @@ export interface CreateUserPayload {
 
 export type UpdateUserPayload = Partial<Omit<CreateUserPayload, 'password'> & { active: boolean }>;
 
+// User-facing
+export interface UserLink {
+  id: number;
+  label: string;
+  external_url: string;
+  file_path: string;
+}
+export interface UserLinksResponse { data: UserLink[]; }
+
+// Admin — aaPanel configs
+export interface AdminAaPanelConfig {
+  id: number; user_id: number; user_email: string;
+  label: string; panel_url: string; api_key_masked: string; created_at: string;
+}
+export interface AdminAaPanelConfigsResponse { data: AdminAaPanelConfig[]; }
+export interface CreateAaPanelConfigPayload { user_id: number; label: string; panel_url: string; api_key: string; }
+export type UpdateAaPanelConfigPayload = Partial<Omit<CreateAaPanelConfigPayload, 'user_id'>>;
+
+// Admin — user links
+export interface AdminUserLink {
+  id: number; user_id: number; user_email: string;
+  aapanel_config_id: number; aapanel_config_label: string;
+  label: string; external_url: string; file_path: string; created_at: string;
+}
+export interface AdminUserLinksResponse { data: AdminUserLink[]; }
+export interface CreateUserLinkPayload {
+  user_id: number; aapanel_config_id: number;
+  label: string; external_url: string; file_path: string;
+}
+export type UpdateUserLinkPayload = Partial<Pick<CreateUserLinkPayload, 'label' | 'external_url' | 'file_path'>>;
+
 export interface Transaction {
   transaction_id: string;
   amount: number;
@@ -232,4 +263,30 @@ export const api = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+
+  // User-facing — links
+  links: () => request<UserLinksResponse>('/api/links'),
+  getLinkContent: (id: number) => request<{ content: string }>(`/api/links/${id}/content`),
+  saveLinkContent: (id: number, content: string) =>
+    request<{ message: string }>(`/api/links/${id}/content`, {
+      method: 'PUT', body: JSON.stringify({ content }),
+    }),
+
+  // Admin — aaPanel configs
+  adminAaPanelConfigs: () => request<AdminAaPanelConfigsResponse>('/api/admin/aapanel-configs'),
+  adminCreateAaPanelConfig: (payload: CreateAaPanelConfigPayload) =>
+    request<AdminAaPanelConfig>('/api/admin/aapanel-configs', { method: 'POST', body: JSON.stringify(payload) }),
+  adminUpdateAaPanelConfig: (id: number, payload: UpdateAaPanelConfigPayload) =>
+    request<AdminAaPanelConfig>(`/api/admin/aapanel-configs/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+  adminDeleteAaPanelConfig: (id: number) =>
+    request<{ message: string }>(`/api/admin/aapanel-configs/${id}`, { method: 'DELETE' }),
+
+  // Admin — user links
+  adminUserLinks: () => request<AdminUserLinksResponse>('/api/admin/user-links'),
+  adminCreateUserLink: (payload: CreateUserLinkPayload) =>
+    request<AdminUserLink>('/api/admin/user-links', { method: 'POST', body: JSON.stringify(payload) }),
+  adminUpdateUserLink: (id: number, payload: UpdateUserLinkPayload) =>
+    request<AdminUserLink>(`/api/admin/user-links/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+  adminDeleteUserLink: (id: number) =>
+    request<{ message: string }>(`/api/admin/user-links/${id}`, { method: 'DELETE' }),
 };
