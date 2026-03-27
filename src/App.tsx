@@ -5,7 +5,6 @@ import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import CartpandaOrders from './pages/CartpandaOrders';
 import Settings from './pages/Settings';
-import Users from './pages/Users';
 import Layout from './components/Layout';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -31,7 +30,6 @@ export default function App() {
           <Route index element={<Dashboard />} />
           <Route path="transactions" element={<Transactions />} />
           <Route path="cartpanda-orders" element={<CartpandaOrders />} />
-          <Route path="users" element={<Users />} />
           <Route path="settings" element={<Settings />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

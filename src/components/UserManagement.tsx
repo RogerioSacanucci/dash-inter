@@ -1,20 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api, AdminUser, CreateUserPayload, UpdateUserPayload } from '../api/client';
 import { useAuth } from '../hooks/useAuth';
-import UserTable from '../components/UserTable';
-import UserFormModal from '../components/UserFormModal';
+import UserTable from './UserTable';
+import UserFormModal from './UserFormModal';
 
-export default function Users() {
+export default function UserManagement() {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modalUser, setModalUser] = useState<AdminUser | null | undefined>(undefined);
   const [togglingId, setTogglingId] = useState<number | null>(null);
-
-  useEffect(() => {
-    document.title = 'Utilizadores — StatsChecker';
-  }, []);
 
   const fetchUsers = useCallback(() => {
     setLoading(true);
@@ -54,7 +50,7 @@ export default function Users() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-white">Utilizadores</h1>
+          <h2 className="text-lg font-semibold text-white">Utilizadores</h2>
           <p className="text-sm text-white/40 mt-0.5">Gerencie os utilizadores da plataforma</p>
         </div>
         <button

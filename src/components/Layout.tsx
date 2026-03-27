@@ -25,15 +25,6 @@ const CartIcon = (
   </svg>
 );
 
-const UsersIcon = (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-    <circle cx="6" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
-    <path d="M1 14c0-2.5 2-4.5 5-4.5s5 2 5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-    <circle cx="12" cy="5.5" r="1.5" stroke="currentColor" strokeWidth="1.2"/>
-    <path d="M12.5 9.5c1.5.3 2.5 1.5 2.5 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-  </svg>
-);
-
 const SettingsIcon = (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
     <circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
@@ -136,12 +127,6 @@ export default function Layout() {
             </div>
           )}
 
-          {isAdmin && (
-            <div className="pl-2">
-              <GroupHeader label="Admin" />
-              <NavItem to="/users" label="Utilizadores" end={false} icon={UsersIcon} onClick={closeSidebar} />
-            </div>
-          )}
         </nav>
 
         {/* Bottom section */}
