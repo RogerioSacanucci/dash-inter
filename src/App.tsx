@@ -3,6 +3,7 @@ import { useAuth } from './hooks/useAuth';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
+import CartpandaOrders from './pages/CartpandaOrders';
 import Settings from './pages/Settings';
 import Layout from './components/Layout';
 
@@ -28,6 +29,7 @@ export default function App() {
         >
           <Route index element={<Dashboard />} />
           <Route path="transactions" element={<Transactions />} />
+          <Route path="cartpanda-orders" element={<CartpandaOrders />} />
           <Route path="settings" element={<Settings />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
