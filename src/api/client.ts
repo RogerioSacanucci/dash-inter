@@ -27,6 +27,7 @@ export interface LoginResponse {
     pushcut_url?: string;
     pushcut_notify?: "all" | "created" | "paid";
     role?: string;
+    cartpanda_param?: string | null;
   };
 }
 
@@ -90,6 +91,37 @@ export interface StatsResponse {
   hourly: boolean;
 }
 
+export interface CartpandaOrder {
+  cartpanda_order_id: string;
+  amount: number;
+  currency: string;
+  status: "PENDING" | "COMPLETED" | "FAILED" | "DECLINED" | "REFUNDED";
+  event: string;
+  payer_name: string | null;
+  payer_email: string | null;
+  created_at: string;
+}
+
+export interface CartpandaOrdersResponse {
+  data: CartpandaOrder[];
+  meta: { total: number; page: number; per_page: number; pages: number };
+}
+
+export interface CartpandaStatsResponse {
+  overview: {
+    total_orders: number;
+    completed: number;
+    pending: number;
+    failed: number;
+    declined: number;
+    refunded: number;
+    total_volume: number;
+  };
+  chart: { date?: string; hour?: string; orders: number; volume: number }[];
+  period: string;
+  hourly: boolean;
+}
+
 export const api = {
   login: (email: string, password: string) =>
     request<LoginResponse>("/api/auth/login", {
@@ -115,6 +147,35 @@ export const api = {
     if (dateTo) params.set("date_to", dateTo);
     if (userId !== undefined) params.set("user_id", String(userId));
     return request<StatsResponse>(`/api/stats?${params}`);
+  },
+
+  cartpandaOrders: (
+    params: {
+      page?: string;
+      status?: string;
+      date_from?: string;
+      date_to?: string;
+      order_id?: string;
+      user_id?: string;
+    } = {},
+  ) => {
+    const qs = new URLSearchParams(
+      params as Record<string, string>,
+    ).toString();
+    return request<CartpandaOrdersResponse>(`/api/cartpanda-orders?${qs}`);
+  },
+
+  cartpandaStats: (
+    period: string = "30d",
+    dateFrom?: string,
+    dateTo?: string,
+    userId?: string,
+  ) => {
+    const params = new URLSearchParams({ period });
+    if (dateFrom) params.set("date_from", dateFrom);
+    if (dateTo) params.set("date_to", dateTo);
+    if (userId) params.set("user_id", userId);
+    return request<CartpandaStatsResponse>(`/api/cartpanda-stats?${params}`);
   },
 
   users: () => request<{ users: AdminUser[] }>("/api/auth/users"),
