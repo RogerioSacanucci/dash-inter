@@ -24,9 +24,9 @@ export default function Login() {
       <div className="relative w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold tracking-tight text-white">
-            Stats<span className="text-brand">Checker</span>
-          </h1>
+          <div className="flex items-center justify-center mb-2">
+            <img src="/logo.png" alt="Fractal" className="h-10 w-auto" />
+          </div>
           <p className="text-white/40 text-sm mt-2">Entre na sua conta</p>
         </div>
 

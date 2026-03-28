@@ -40,7 +40,7 @@ export default function Dashboard() {
   }, [hasWayMb, hasCartpanda, setActivePlatform]);
 
   useEffect(() => {
-    document.title = 'Dashboard — StatsChecker';
+    document.title = 'Dashboard';
   }, []);
 
   useEffect(() => {

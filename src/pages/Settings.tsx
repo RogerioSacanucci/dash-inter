@@ -33,7 +33,7 @@ export default function Settings() {
   const [error, setError]                 = useState<string | null>(null);
 
   useEffect(() => {
-    document.title = 'Configurações — StatsChecker';
+    document.title = 'Configurações';
   }, []);
 
   useEffect(() => {

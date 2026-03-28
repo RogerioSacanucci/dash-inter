@@ -111,30 +111,34 @@ export default function Layout() {
       >
         {/* Brand */}
         <div className="px-5 h-16 flex items-center shrink-0">
-          <span className="text-base font-bold tracking-tight text-white select-none">
-            Stats<span className="text-brand">Checker</span>
-          </span>
+          <img src="/logo.png" alt="Fractal" className="h-7 w-auto" />
         </div>
 
         {/* Nav */}
         <nav aria-label="Navegação principal" className="flex-1 px-3 py-2 flex flex-col gap-0.5 overflow-y-auto">
-          <NavItem to="/" label="Dashboard" end icon={DashboardIcon} onClick={closeSidebar} />
+          <div>
+            <GroupHeader label="Geral" />
+            <NavItem to="/" label="Dashboard" end icon={DashboardIcon} onClick={closeSidebar} />
+          </div>
 
           {hasWayMb && (
-            <div className="pl-2">
+            <div>
               <GroupHeader label="WayMB" />
               <NavItem to="/transactions" label="Transações" end={false} icon={TransactionsIcon} onClick={closeSidebar} />
             </div>
           )}
 
           {hasCartpanda && (
-            <div className="pl-2">
+            <div>
               <GroupHeader label="Cartpanda" />
               <NavItem to="/cartpanda-orders" label="Pedidos" end={false} icon={CartIcon} onClick={closeSidebar} />
             </div>
           )}
 
-          <NavItem to="/links" label="Links" end={false} icon={LinksIcon} onClick={closeSidebar} />
+          <div>
+            <GroupHeader label="Ferramentas" />
+            <NavItem to="/links" label="Links" end={false} icon={LinksIcon} onClick={closeSidebar} />
+          </div>
 
         </nav>
 
@@ -167,9 +171,7 @@ export default function Layout() {
               <path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </button>
-          <span className="text-base font-bold tracking-tight text-white select-none">
-            Stats<span className="text-brand">Checker</span>
-          </span>
+          <img src="/logo.png" alt="Fractal" className="h-6 w-auto" />
         </div>
 
         <main className="flex-1 px-6 py-8 lg:px-8">

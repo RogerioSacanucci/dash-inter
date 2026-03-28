@@ -8,7 +8,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-const BRAND  = '#ff0050';
+const BRAND  = '#14b8a6';
 const INDIGO = '#6366f1';
 
 interface DataPoint {

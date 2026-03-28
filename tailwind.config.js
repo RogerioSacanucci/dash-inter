@@ -8,8 +8,8 @@ export default {
       },
       colors: {
         brand: {
-          DEFAULT: '#ff0050',
-          hover:   '#e0003f',
+          DEFAULT: '#14b8a6',
+          hover:   '#0d9488',
         },
         canvas:  '#0d0d0e',
         surface: {

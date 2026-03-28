@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import { useLinkEditor } from '../hooks/useLinkEditor';
@@ -5,6 +6,14 @@ import type { UserLink } from '../api/client';
 
 function getLanguage(filePath: string): string {
   return filePath.endsWith('.js') ? 'javascript' : 'html';
+}
+
+function injectBaseTag(html: string, externalUrl: string): string {
+  const base = `<base href="${externalUrl}">`;
+  if (html.includes('<head>')) {
+    return html.replace('<head>', `<head>${base}`);
+  }
+  return base + html;
 }
 
 const EDITOR_OPTIONS = {
@@ -26,6 +35,14 @@ export default function LinkEditor() {
 
   const { content, setContent, loading, saving, error, saveError, save, isDirty } =
     useLinkEditor(linkId);
+
+  const [previewContent, setPreviewContent] = useState('');
+
+  useEffect(() => {
+    if (loading) return;
+    const timer = setTimeout(() => setPreviewContent(content), 600);
+    return () => clearTimeout(timer);
+  }, [content, loading]);
 
   if (loading) {
     return (
@@ -108,7 +125,7 @@ export default function LinkEditor() {
         {/* Live preview */}
         <div className="w-1/2 h-full border-l border-zinc-800">
           <iframe
-            srcDoc={content}
+            srcDoc={link?.external_url ? injectBaseTag(previewContent, link.external_url) : previewContent}
             title="preview"
             className="w-full h-full border-0"
             sandbox="allow-scripts allow-same-origin"

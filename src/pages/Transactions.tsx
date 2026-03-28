@@ -42,7 +42,7 @@ export default function Transactions() {
   const [selectedAccount, setSelectedAccount] = useState('');
 
   useEffect(() => {
-    document.title = 'Transações — StatsChecker';
+    document.title = 'Transações';
   }, []);
 
   useEffect(() => {

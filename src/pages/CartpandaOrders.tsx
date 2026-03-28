@@ -41,7 +41,7 @@ export default function CartpandaOrders() {
   const [selectedAccount, setSelectedAccount] = useState('');
 
   useEffect(() => {
-    document.title = 'Pedidos Cartpanda — StatsChecker';
+    document.title = 'Pedidos';
   }, []);
 
   useEffect(() => {
