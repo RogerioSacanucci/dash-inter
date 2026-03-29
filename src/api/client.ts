@@ -241,7 +241,7 @@ export interface AdminCartpandaShopUser {
 }
 
 export interface AdminCartpandaShopDetailResponse {
-  shop: AdminCartpandaShopWithStats;
+  shop: AdminCartpandaShop;
   aggregate: {
     total_orders: number;
     completed: number;

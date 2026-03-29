@@ -25,15 +25,17 @@ export default function UserManagement() {
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
-  async function handleSave(payload: CreateUserPayload | UpdateUserPayload) {
+  async function handleSave(payload: CreateUserPayload | UpdateUserPayload): Promise<number | void> {
     if (modalUser === null) {
       const { user: created } = await api.adminCreateUser(payload as CreateUserPayload);
       setUsers((prev) => [created, ...prev]);
+      setModalUser(undefined);
+      return created.id;
     } else if (modalUser) {
       const { user: updated } = await api.adminUpdateUser(modalUser.id, payload as UpdateUserPayload);
       setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+      setModalUser(undefined);
     }
-    setModalUser(undefined);
   }
 
   async function handleToggleActive(user: AdminUser) {
