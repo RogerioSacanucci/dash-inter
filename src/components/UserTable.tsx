@@ -1,5 +1,11 @@
 import { AdminUser } from '../api/client';
 
+function formatBalance(value: string): string {
+  const num = parseFloat(value ?? '0');
+  const abs = Math.abs(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return (num < 0 ? '-$\u00a0' : '$\u00a0') + abs;
+}
+
 interface UserTableProps {
   users: AdminUser[];
   loading: boolean;
@@ -33,7 +39,7 @@ export default function UserTable({ users, loading, currentUserId, onEdit, onTog
         <caption className="sr-only">Lista de utilizadores</caption>
         <thead>
           <tr className="border-b border-white/[0.06]">
-            {['Email', 'Nome pagador', 'Role', 'Ações'].map((h) => (
+            {['Email', 'Nome pagador', 'A Liberar', 'Liberado', 'Role', 'Ações'].map((h) => (
               <th
                 key={h}
                 scope="col"
@@ -57,6 +63,14 @@ export default function UserTable({ users, loading, currentUserId, onEdit, onTog
               </td>
               <td className="py-3.5 px-4 text-white/50">
                 {user.payer_name || '—'}
+              </td>
+              <td className="py-3.5 px-4 tabular-nums text-white/50 hidden md:table-cell">
+                {formatBalance(user.balance_pending)}
+              </td>
+              <td className="py-3.5 px-4 tabular-nums hidden md:table-cell">
+                <span className={parseFloat(user.balance_released) < 0 ? 'text-red-400' : 'text-white/50'}>
+                  {formatBalance(user.balance_released)}
+                </span>
               </td>
               <td className="py-3.5 px-4">
                 <span
