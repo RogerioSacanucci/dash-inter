@@ -27,12 +27,20 @@ export default function CartpandaStatsCards({ overview }: Props) {
   const fmt = (n: number) =>
     '$\u00a0' + n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 
+  const fmtBalance = (value: string) => {
+    const num = parseFloat(value ?? '0');
+    const abs = Math.abs(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return (num < 0 ? '-$\u00a0' : '$\u00a0') + abs;
+  };
+
   const metrics: Metric[] = [
     { label: 'Volume', value: fmt(overview.total_volume), valueColor: 'text-brand' },
     { label: 'Pedidos', value: overview.total_orders.toString(), sub: `${overview.pending} pendentes` },
     { label: 'Completos', value: overview.completed.toString(), valueColor: 'text-emerald-400' },
     { label: 'Reembolsos', value: overview.refunded.toString(), valueColor: 'text-purple-400' },
     { label: 'Chargebacks', value: overview.declined.toString(), valueColor: 'text-orange-400' },
+    { label: 'A Liberar', value: fmtBalance(overview.balance_pending), valueColor: 'text-yellow-400' },
+    { label: 'Liberado', value: fmtBalance(overview.balance_released), valueColor: parseFloat(overview.balance_released) < 0 ? 'text-red-400' : 'text-emerald-400' },
   ];
 
   return (
