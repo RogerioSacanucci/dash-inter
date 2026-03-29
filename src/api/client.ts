@@ -31,6 +31,12 @@ export interface LoginResponse {
   };
 }
 
+export interface AdminCartpandaShop {
+  id: number;
+  shop_slug: string;
+  name: string;
+}
+
 export interface AdminUser {
   id: number;
   email: string;
@@ -40,6 +46,7 @@ export interface AdminUser {
   cartpanda_param: string | null;
   active: boolean;
   created_at: string;
+  shops: AdminCartpandaShop[];
 }
 
 export interface AdminUsersResponse {
@@ -177,6 +184,43 @@ export interface CartpandaStatsResponse {
   hourly: boolean;
 }
 
+export interface AdminCartpandaShopWithStats extends AdminCartpandaShop {
+  users_count: number;
+  orders_count: number;
+  completed: number;
+  total_volume: number;
+}
+
+export interface AdminCartpandaShopsResponse {
+  data: AdminCartpandaShopWithStats[];
+  period: string;
+}
+
+export interface AdminCartpandaShopUser {
+  id: number;
+  email: string;
+  orders_count: number;
+  completed: number;
+  total_volume: number;
+}
+
+export interface AdminCartpandaShopDetailResponse {
+  shop: AdminCartpandaShopWithStats;
+  aggregate: {
+    total_orders: number;
+    completed: number;
+    pending: number;
+    failed: number;
+    declined: number;
+    refunded: number;
+    total_volume: number;
+  };
+  chart: { date?: string; hour?: string; orders: number; volume: number }[];
+  users: AdminCartpandaShopUser[];
+  period: string;
+  hourly: boolean;
+}
+
 export const api = {
   login: (email: string, password: string) =>
     request<LoginResponse>("/api/auth/login", {
@@ -289,4 +333,30 @@ export const api = {
     request<AdminUserLink>(`/api/admin/user-links/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
   adminDeleteUserLink: (id: number) =>
     request<{ message: string }>(`/api/admin/user-links/${id}`, { method: 'DELETE' }),
+
+  // Admin — CartPanda shops
+  adminCartpandaShops: (period: string = '30d', dateFrom?: string, dateTo?: string) => {
+    const params = new URLSearchParams({ period });
+    if (dateFrom) params.set('date_from', dateFrom);
+    if (dateTo) params.set('date_to', dateTo);
+    return request<AdminCartpandaShopsResponse>(`/api/admin/cartpanda-shops?${params}`);
+  },
+
+  adminCartpandaShopDetail: (id: number, period: string = '30d', dateFrom?: string, dateTo?: string) => {
+    const params = new URLSearchParams({ period });
+    if (dateFrom) params.set('date_from', dateFrom);
+    if (dateTo) params.set('date_to', dateTo);
+    return request<AdminCartpandaShopDetailResponse>(`/api/admin/cartpanda-shops/${id}?${params}`);
+  },
+
+  adminAttachUserShop: (userId: number, shopId: number) =>
+    request<{ message: string }>(`/api/admin/users/${userId}/shops`, {
+      method: 'POST',
+      body: JSON.stringify({ shop_id: shopId }),
+    }),
+
+  adminDetachUserShop: (userId: number, shopId: number) =>
+    request<{ message: string }>(`/api/admin/users/${userId}/shops/${shopId}`, {
+      method: 'DELETE',
+    }),
 };
