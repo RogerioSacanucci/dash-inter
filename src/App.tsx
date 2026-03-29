@@ -8,6 +8,7 @@ import Settings from './pages/Settings';
 import Links from './pages/Links';
 import LinkEditor from './pages/LinkEditor';
 import CartpandaShops from './pages/admin/CartpandaShops';
+import CartpandaShopDetail from './pages/admin/CartpandaShopDetail';
 import Layout from './components/Layout';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="settings" element={<Settings />} />
           <Route path="links" element={<Links />} />
           <Route path="admin/cartpanda-shops" element={<CartpandaShops />} />
+          <Route path="admin/cartpanda-shops/:id" element={<CartpandaShopDetail />} />
         </Route>
         <Route
           path="/links/:id/edit"
