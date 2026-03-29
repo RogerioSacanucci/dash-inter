@@ -25,6 +25,12 @@ const CartIcon = (
   </svg>
 );
 
+const ShopIcon = (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <path d="M2 7v7h12V7M1 3h14v4c0 0-1.5 1-3.5 1S8 7 8 7s-1.5 1-3.5 1S1 7 1 7V3z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
 const LinksIcon = (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
     <path d="M6.5 9.5a3.5 3.5 0 0 0 5 0l2-2a3.5 3.5 0 0 0-5-5l-1 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -132,6 +138,9 @@ export default function Layout() {
             <div>
               <GroupHeader label="Cartpanda" />
               <NavItem to="/cartpanda-orders" label="Pedidos" end={false} icon={CartIcon} onClick={closeSidebar} />
+              {isAdmin && (
+                <NavItem to="/admin/cartpanda-shops" label="Lojas" end={false} icon={ShopIcon} onClick={closeSidebar} />
+              )}
             </div>
           )}
 
