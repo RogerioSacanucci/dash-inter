@@ -1,5 +1,5 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { AdminUser, CreateUserPayload, UpdateUserPayload } from '../api/client';
+import { api, AdminUser, AdminCartpandaShop, CreateUserPayload, UpdateUserPayload } from '../api/client';
 
 interface UserFormModalProps {
   user: AdminUser | null;
@@ -21,6 +21,50 @@ export default function UserFormModal({ user, onClose, onSave }: UserFormModalPr
   const [cartpandaParam, setCartpandaParam] = useState(user?.cartpanda_param ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Shop management (edit mode only)
+  const [allShops, setAllShops] = useState<AdminCartpandaShop[]>([]);
+  const [userShops, setUserShops] = useState<AdminCartpandaShop[]>(user?.shops ?? []);
+  const [selectedShopId, setSelectedShopId] = useState('');
+  const [shopLoading, setShopLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isEdit) return;
+    api.adminCartpandaShops().then((res) => setAllShops(res.data));
+  }, [isEdit]);
+
+  const availableShops = allShops.filter(
+    (shop) => !userShops.some((us) => us.id === shop.id),
+  );
+
+  async function handleAttachShop() {
+    if (!user || !selectedShopId) return;
+    const shopId = Number(selectedShopId);
+    setShopLoading(true);
+    try {
+      await api.adminAttachUserShop(user.id, shopId);
+      const shop = allShops.find((s) => s.id === shopId);
+      if (shop) setUserShops((prev) => [...prev, shop]);
+      setSelectedShopId('');
+    } catch {
+      setError('Erro ao associar loja.');
+    } finally {
+      setShopLoading(false);
+    }
+  }
+
+  async function handleDetachShop(shopId: number) {
+    if (!user) return;
+    setShopLoading(true);
+    try {
+      await api.adminDetachUserShop(user.id, shopId);
+      setUserShops((prev) => prev.filter((s) => s.id !== shopId));
+    } catch {
+      setError('Erro ao remover loja.');
+    } finally {
+      setShopLoading(false);
+    }
+  }
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
@@ -68,7 +112,7 @@ export default function UserFormModal({ user, onClose, onSave }: UserFormModalPr
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="bg-surface-1 rounded-2xl border border-white/[0.06] p-6 w-full max-w-md"
+        className="bg-surface-1 rounded-2xl border border-white/[0.06] p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
         role="dialog"
         aria-modal="true"
         aria-label={isEdit ? 'Editar utilizador' : 'Criar utilizador'}
@@ -184,6 +228,62 @@ export default function UserFormModal({ user, onClose, onSave }: UserFormModalPr
               className={inputClass}
             />
           </div>
+
+          {isEdit && (
+            <div className="border-t border-white/[0.06] pt-2 flex flex-col gap-3">
+              <label className="text-xs font-semibold text-white/40 uppercase tracking-widest">
+                Lojas Cartpanda
+              </label>
+
+              {userShops.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {userShops.map((shop) => (
+                    <span
+                      key={shop.id}
+                      className="bg-surface-2 border border-white/[0.08] rounded-lg px-2.5 py-1 text-xs text-white/70 flex items-center gap-1.5"
+                    >
+                      {shop.name}
+                      <button
+                        type="button"
+                        disabled={shopLoading}
+                        onClick={() => handleDetachShop(shop.id)}
+                        className="text-white/30 hover:text-white/60 transition-colors disabled:opacity-50"
+                        aria-label={`Remover ${shop.name}`}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <select
+                  value={selectedShopId}
+                  onChange={(e) => setSelectedShopId(e.target.value)}
+                  className={inputClass}
+                  disabled={shopLoading || availableShops.length === 0}
+                >
+                  <option value="">
+                    {availableShops.length === 0 ? 'Sem lojas disponíveis' : 'Selecionar loja...'}
+                  </option>
+                  {availableShops.map((shop) => (
+                    <option key={shop.id} value={shop.id}>
+                      {shop.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  disabled={!selectedShopId || shopLoading}
+                  onClick={handleAttachShop}
+                  className="px-4 py-2.5 bg-brand hover:bg-brand-hover disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors whitespace-nowrap"
+                >
+                  Adicionar
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center gap-3 pt-2">
             <button
