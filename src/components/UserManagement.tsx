@@ -3,6 +3,7 @@ import { api, AdminUser, CreateUserPayload, UpdateUserPayload } from '../api/cli
 import { useAuth } from '../hooks/useAuth';
 import UserTable from './UserTable';
 import UserFormModal from './UserFormModal';
+import UserBalancePanel from './UserBalancePanel';
 
 export default function UserManagement() {
   const { user: currentUser } = useAuth();
@@ -11,6 +12,7 @@ export default function UserManagement() {
   const [error, setError] = useState<string | null>(null);
   const [modalUser, setModalUser] = useState<AdminUser | null | undefined>(undefined);
   const [togglingId, setTogglingId] = useState<number | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
   const fetchUsers = useCallback(() => {
     setLoading(true);
@@ -76,8 +78,27 @@ export default function UserManagement() {
           onEdit={(user) => setModalUser(user)}
           onToggleActive={handleToggleActive}
           togglingId={togglingId}
+          onViewBalance={(user) => setSelectedUserId(user.id)}
         />
       </div>
+
+      {selectedUserId !== null && (
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-semibold text-white">
+              Saldo — {users.find((u) => u.id === selectedUserId)?.email}
+            </h3>
+            <button
+              type="button"
+              onClick={() => setSelectedUserId(null)}
+              className="text-sm text-white/30 hover:text-white/60 transition-colors"
+            >
+              Fechar ×
+            </button>
+          </div>
+          <UserBalancePanel userId={selectedUserId} />
+        </div>
+      )}
 
       {modalUser !== undefined && (
         <UserFormModal
