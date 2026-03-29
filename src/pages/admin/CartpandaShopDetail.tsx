@@ -32,6 +32,12 @@ function formatVolume(value: number): string {
   return '$\u00a0' + value.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
+function formatBalance(value: string): string {
+  const num = parseFloat(value ?? '0');
+  const abs = Math.abs(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return (num < 0 ? '-$\u00a0' : '$\u00a0') + abs;
+}
+
 export default function CartpandaShopDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -226,12 +232,14 @@ export default function CartpandaShopDetail() {
                     <th className="px-4 py-3 font-medium text-right hidden sm:table-cell">Pedidos</th>
                     <th className="px-4 py-3 font-medium text-right hidden sm:table-cell">Concluídos</th>
                     <th className="px-4 py-3 font-medium text-right">Volume</th>
+                    <th className="px-4 py-3 font-medium text-right hidden lg:table-cell">A Liberar</th>
+                    <th className="px-4 py-3 font-medium text-right hidden lg:table-cell">Liberado</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.users.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-4 py-12 text-center text-white/30 text-sm">
+                      <td colSpan={6} className="px-4 py-12 text-center text-white/30 text-sm">
                         Nenhum usuário encontrado para o período selecionado.
                       </td>
                     </tr>
@@ -243,6 +251,14 @@ export default function CartpandaShopDetail() {
                         <td className="px-4 py-3 text-right text-emerald-400 tabular-nums hidden sm:table-cell">{user.completed}</td>
                         <td className="px-4 py-3 text-right text-brand tabular-nums">
                           {formatVolume(user.total_volume)}
+                        </td>
+                        <td className="px-4 py-3 text-right tabular-nums text-white/50 hidden lg:table-cell">
+                          {formatBalance(user.balance_pending)}
+                        </td>
+                        <td className="px-4 py-3 text-right tabular-nums hidden lg:table-cell">
+                          <span className={parseFloat(user.balance_released) < 0 ? 'text-red-400' : 'text-white/50'}>
+                            {formatBalance(user.balance_released)}
+                          </span>
                         </td>
                       </tr>
                     ))
