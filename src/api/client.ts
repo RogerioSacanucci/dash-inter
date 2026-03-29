@@ -47,6 +47,37 @@ export interface AdminUser {
   active: boolean;
   created_at: string;
   shops: AdminCartpandaShop[];
+  balance_pending: string;
+  balance_released: string;
+}
+
+export interface Balance {
+  balance_pending: string;
+  balance_released: string;
+  currency: string;
+}
+
+export interface PayoutLog {
+  id: number;
+  amount: string;
+  type: 'withdrawal' | 'adjustment';
+  note: string | null;
+  admin_email: string;
+  created_at: string;
+}
+
+export interface UserBalanceResponse {
+  balance: Balance;
+  payout_logs: {
+    data: PayoutLog[];
+    meta: { total: number; page: number; per_page: number; pages: number };
+  };
+}
+
+export interface PayoutPayload {
+  amount: number;
+  type: 'withdrawal' | 'adjustment';
+  note?: string;
 }
 
 export interface AdminUsersResponse {
@@ -178,6 +209,8 @@ export interface CartpandaStatsResponse {
     declined: number;
     refunded: number;
     total_volume: number;
+    balance_pending: string;
+    balance_released: string;
   };
   chart: { date?: string; hour?: string; orders: number; volume: number }[];
   period: string;
@@ -199,9 +232,12 @@ export interface AdminCartpandaShopsResponse {
 export interface AdminCartpandaShopUser {
   id: number;
   email: string;
+  payer_name: string | null;
   orders_count: number;
   completed: number;
   total_volume: number;
+  balance_pending: string;
+  balance_released: string;
 }
 
 export interface AdminCartpandaShopDetailResponse {
@@ -358,5 +394,18 @@ export const api = {
   adminDetachUserShop: (userId: number, shopId: number) =>
     request<{ message: string }>(`/api/admin/users/${userId}/shops/${shopId}`, {
       method: 'DELETE',
+    }),
+
+  // Balance
+  getOwnBalance: () =>
+    request<Balance>('/api/balance'),
+
+  adminGetUserBalance: (userId: number, page = 1) =>
+    request<UserBalanceResponse>(`/api/admin/users/${userId}/balance?page=${page}`),
+
+  adminPayout: (userId: number, payload: PayoutPayload) =>
+    request<Balance>(`/api/admin/users/${userId}/payout`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
     }),
 };
