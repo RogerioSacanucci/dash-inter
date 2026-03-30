@@ -36,11 +36,11 @@ export default function CartpandaStatsCards({ overview }: Props) {
   const metrics: Metric[] = [
     { label: 'Volume', value: fmt(overview.total_volume), valueColor: 'text-brand' },
     { label: 'Pedidos', value: overview.total_orders.toString(), sub: `${overview.pending} pendentes` },
-    { label: 'Completos', value: overview.completed.toString(), valueColor: 'text-emerald-400' },
-    { label: 'Reembolsos', value: overview.refunded.toString(), valueColor: 'text-purple-400' },
-    { label: 'Chargebacks', value: overview.declined.toString(), valueColor: 'text-orange-400' },
-    { label: 'A Liberar', value: fmtBalance(overview.balance_pending), valueColor: 'text-yellow-400' },
-    { label: 'Liberado', value: fmtBalance(overview.balance_released), valueColor: parseFloat(overview.balance_released) < 0 ? 'text-red-400' : 'text-emerald-400' },
+    { label: 'Completos', value: overview.completed.toString() },
+    { label: 'Reembolsos', value: overview.refunded.toString() },
+    { label: 'Chargebacks', value: overview.declined.toString() },
+    { label: 'A Liberar', value: fmtBalance(overview.balance_pending) },
+    { label: 'Liberado', value: fmtBalance(overview.balance_released), valueColor: parseFloat(overview.balance_released) < 0 ? 'text-red-400' : undefined },
   ];
 
   return (

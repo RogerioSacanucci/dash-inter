@@ -48,7 +48,7 @@ export default function UserBalancePanel({ userId }: Props) {
               <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest">
                 Saldo a Liberar
               </p>
-              <p className="text-2xl font-bold tracking-tight tabular-nums leading-none text-yellow-400">
+              <p className="text-2xl font-bold tracking-tight tabular-nums leading-none text-white">
                 {loading ? '—' : formatBalance(data?.balance.balance_pending ?? '0')}
               </p>
             </div>
@@ -56,7 +56,7 @@ export default function UserBalancePanel({ userId }: Props) {
               <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest">
                 Saldo Liberado
               </p>
-              <p className={`text-2xl font-bold tracking-tight tabular-nums leading-none ${releasedIsNegative ? 'text-red-400' : 'text-emerald-400'}`}>
+              <p className={`text-2xl font-bold tracking-tight tabular-nums leading-none ${releasedIsNegative ? 'text-red-400' : 'text-white'}`}>
                 {loading ? '—' : formatBalance(data?.balance.balance_released ?? '0')}
               </p>
             </div>

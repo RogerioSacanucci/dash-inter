@@ -51,7 +51,6 @@ export default function StatsCards({ overview }: Props) {
           label="Receita Líquida"
           value={fmt(overview.total_volume * 0.65)}
           sub="-35%"
-          valueColor="text-emerald-400"
         />
         <MetricCell
           label="Transações"
@@ -83,7 +82,6 @@ export default function StatsCards({ overview }: Props) {
           label="Receita Líquida"
           value={fmt(overview.total_volume * 0.65)}
           sub="-35%"
-          valueColor="text-emerald-400"
         />
         <MetricCell
           label="Transações"
