@@ -136,10 +136,10 @@ export default function Layout() {
 
           {hasCartpanda && (
             <div>
-              <GroupHeader label="Cartpanda" />
-              <NavItem to="/cartpanda-orders" label="Pedidos" end={false} icon={CartIcon} onClick={closeSidebar} />
+              <GroupHeader label="Internacional" />
+              <NavItem to="/internacional-orders" label="Pedidos" end={false} icon={CartIcon} onClick={closeSidebar} />
               {isAdmin && (
-                <NavItem to="/admin/cartpanda-shops" label="Lojas" end={false} icon={ShopIcon} onClick={closeSidebar} />
+                <NavItem to="/admin/internacional-shops" label="Lojas" end={false} icon={ShopIcon} onClick={closeSidebar} />
               )}
             </div>
           )}

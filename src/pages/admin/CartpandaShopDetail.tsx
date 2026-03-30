@@ -97,7 +97,7 @@ export default function CartpandaShopDetail() {
       {/* Back button */}
       <button
         type="button"
-        onClick={() => navigate('/admin/cartpanda-shops')}
+        onClick={() => navigate('/admin/internacional-shops')}
         className="flex items-center gap-1.5 text-sm text-white/40 hover:text-white/70 transition-colors w-fit focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded"
       >
         ← Lojas

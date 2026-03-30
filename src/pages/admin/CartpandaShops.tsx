@@ -30,7 +30,7 @@ export default function CartpandaShops() {
   const [showCustom, setShowCustom] = useState(false);
 
   useEffect(() => {
-    document.title = 'Lojas Cartpanda';
+    document.title = 'Lojas Internacional';
   }, []);
 
   const fetchData = useCallback(() => {
@@ -68,7 +68,7 @@ export default function CartpandaShops() {
       {/* Header + Period Filter */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-white">Lojas Cartpanda</h1>
+          <h1 className="text-xl font-bold text-white">Lojas Internacional</h1>
           <p className="text-sm text-white/40 mt-0.5">
             {data ? `${shops.length} lojas encontradas` : ''}
           </p>
@@ -172,7 +172,7 @@ export default function CartpandaShops() {
                   shops.map((shop) => (
                     <tr
                       key={shop.id}
-                      onClick={() => navigate(`/admin/cartpanda-shops/${shop.id}`)}
+                      onClick={() => navigate(`/admin/internacional-shops/${shop.id}`)}
                       className="border-b border-white/[0.06] last:border-0 cursor-pointer hover:bg-white/[0.02] transition-colors"
                     >
                       <td className="px-4 py-3 text-white/70 font-medium">{shop.name}</td>

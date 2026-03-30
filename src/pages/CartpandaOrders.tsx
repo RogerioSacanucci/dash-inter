@@ -110,7 +110,7 @@ export default function CartpandaOrders() {
       {/* Header + Filters */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-white">Pedidos Cartpanda</h1>
+          <h1 className="text-xl font-bold text-white">Pedidos Internacional</h1>
           <p className="text-sm text-white/40 mt-0.5">
             {data ? `${data.meta.total} pedidos encontrados` : ''}
           </p>

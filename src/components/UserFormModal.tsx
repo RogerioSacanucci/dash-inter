@@ -229,7 +229,7 @@ export default function UserFormModal({ user, onClose, onSave }: UserFormModalPr
 
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-white/40 uppercase tracking-widest" htmlFor="uf-cartpanda">
-              Cartpanda param
+              Internacional param
             </label>
             <input
               id="uf-cartpanda"
@@ -243,7 +243,7 @@ export default function UserFormModal({ user, onClose, onSave }: UserFormModalPr
 
           <div className="border-t border-white/[0.06] pt-2 flex flex-col gap-3">
             <label className="text-xs font-semibold text-white/40 uppercase tracking-widest">
-              Lojas Cartpanda
+              Lojas Internacional
             </label>
 
             {userShops.length > 0 && (

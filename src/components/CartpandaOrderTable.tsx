@@ -41,7 +41,7 @@ export default function CartpandaOrderTable({ orders, loading }: Props) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
-        <caption className="sr-only">Lista de pedidos Cartpanda</caption>
+        <caption className="sr-only">Lista de pedidos Internacional</caption>
         <thead>
           <tr className="border-b border-white/[0.06]">
             {['ID Pedido', 'Valor', 'Evento', 'Status', 'Comprador', 'Data'].map((h) => (

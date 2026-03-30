@@ -118,7 +118,7 @@ export default function Dashboard() {
                     : 'text-white/40 hover:text-white/70'
                 }`}
               >
-                🛒 Cartpanda
+                🛒 Internacional
               </button>
             </div>
           )}

@@ -33,11 +33,11 @@ export default function App() {
         >
           <Route index element={<Dashboard />} />
           <Route path="transactions" element={<Transactions />} />
-          <Route path="cartpanda-orders" element={<CartpandaOrders />} />
+          <Route path="internacional-orders" element={<CartpandaOrders />} />
           <Route path="settings" element={<Settings />} />
           <Route path="links" element={<Links />} />
-          <Route path="admin/cartpanda-shops" element={<CartpandaShops />} />
-          <Route path="admin/cartpanda-shops/:id" element={<CartpandaShopDetail />} />
+          <Route path="admin/internacional-shops" element={<CartpandaShops />} />
+          <Route path="admin/internacional-shops/:id" element={<CartpandaShopDetail />} />
         </Route>
         <Route
           path="/links/:id/edit"

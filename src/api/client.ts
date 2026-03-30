@@ -297,7 +297,7 @@ export const api = {
     const qs = new URLSearchParams(
       params as Record<string, string>,
     ).toString();
-    return request<CartpandaOrdersResponse>(`/api/cartpanda-orders?${qs}`);
+    return request<CartpandaOrdersResponse>(`/api/internacional-orders?${qs}`);
   },
 
   cartpandaStats: (
@@ -310,7 +310,7 @@ export const api = {
     if (dateFrom) params.set("date_from", dateFrom);
     if (dateTo) params.set("date_to", dateTo);
     if (userId) params.set("user_id", userId);
-    return request<CartpandaStatsResponse>(`/api/cartpanda-stats?${params}`);
+    return request<CartpandaStatsResponse>(`/api/internacional-stats?${params}`);
   },
 
   users: () => request<{ users: AdminUser[] }>("/api/auth/users"),
@@ -375,14 +375,14 @@ export const api = {
     const params = new URLSearchParams({ period });
     if (dateFrom) params.set('date_from', dateFrom);
     if (dateTo) params.set('date_to', dateTo);
-    return request<AdminCartpandaShopsResponse>(`/api/admin/cartpanda-shops?${params}`);
+    return request<AdminCartpandaShopsResponse>(`/api/admin/internacional-shops?${params}`);
   },
 
   adminCartpandaShopDetail: (id: number, period: string = '30d', dateFrom?: string, dateTo?: string) => {
     const params = new URLSearchParams({ period });
     if (dateFrom) params.set('date_from', dateFrom);
     if (dateTo) params.set('date_to', dateTo);
-    return request<AdminCartpandaShopDetailResponse>(`/api/admin/cartpanda-shops/${id}?${params}`);
+    return request<AdminCartpandaShopDetailResponse>(`/api/admin/internacional-shops/${id}?${params}`);
   },
 
   adminAttachUserShop: (userId: number, shopId: number) =>
