@@ -1,3 +1,4 @@
+import { type ChangeEvent } from 'react';
 import DatePicker from 'react-datepicker';
 import { periodToDates } from '../utils/dates';
 
@@ -50,10 +51,15 @@ export default function DateRangeFilter({
     onPeriodChange('custom', '', '');
   }
 
-  function handleUtcChange(e: React.ChangeEvent<HTMLSelectElement>) {
+  function handleUtcChange(e: ChangeEvent<HTMLSelectElement>) {
     const offset = Number(e.target.value);
     localStorage.setItem('utc_offset', String(offset));
     onUtcOffsetChange(offset);
+    // Recalculate dates for the active quick period with the new offset
+    if (period && period !== 'custom') {
+      const { from, to } = periodToDates(period, offset);
+      onPeriodChange(period, from, to);
+    }
   }
 
   // Parse YYYY-MM-DD strings to Date objects for react-datepicker

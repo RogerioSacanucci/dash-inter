@@ -2,6 +2,15 @@ export function toDateStr(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+export function getStoredUtcOffset(): number {
+  const stored = localStorage.getItem('utc_offset');
+  if (stored !== null) {
+    const parsed = Number(stored);
+    if (!Number.isNaN(parsed) && parsed >= -12 && parsed <= 14) return parsed;
+  }
+  return -3;
+}
+
 export function periodToDates(value: string, utcOffset: number = 0): { from: string; to: string } {
   const now = new Date(Date.now() + utcOffset * 60 * 60 * 1000);
   const toStr = (d: Date) => d.toISOString().slice(0, 10);

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api, AdminUser } from '../api/client';
 import DateRangeFilter from '../components/DateRangeFilter';
+import { getStoredUtcOffset } from '../utils/dates';
 import { useAuth } from '../hooks/useAuth';
 import { useDashboardStats } from '../hooks/useDashboardStats';
 import StatsCards from '../components/StatsCards';
@@ -15,14 +16,7 @@ export default function Dashboard() {
   const [dateFrom, setDateFrom]     = useState('');
   const [dateTo, setDateTo]         = useState('');
   const [retryCount, setRetryCount] = useState(0);
-  const [utcOffset, setUtcOffset] = useState(() => {
-    const stored = localStorage.getItem('utc_offset');
-    if (stored !== null) {
-      const parsed = Number(stored);
-      if (!Number.isNaN(parsed) && parsed >= -12 && parsed <= 14) return parsed;
-    }
-    return -3;
-  });
+  const [utcOffset, setUtcOffset] = useState(getStoredUtcOffset);
 
   const [accounts, setAccounts]             = useState<AdminUser[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string>('');

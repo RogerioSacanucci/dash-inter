@@ -3,6 +3,7 @@ import { api, Transaction, TransactionsResponse, AdminUser } from '../api/client
 import { useAuth } from '../hooks/useAuth';
 import TransactionTable from '../components/TransactionTable';
 import DateRangeFilter from '../components/DateRangeFilter';
+import { getStoredUtcOffset } from '../utils/dates';
 
 const STATUSES = ['', 'PENDING', 'COMPLETED', 'FAILED', 'EXPIRED', 'DECLINED'];
 const STATUS_LABELS: Record<string, string> = {
@@ -29,14 +30,7 @@ export default function Transactions() {
   const [txId, setTxId] = useState('');
   const [page, setPage] = useState(1);
   const [period, setPeriod] = useState('');
-  const [utcOffset, setUtcOffset] = useState(() => {
-    const stored = localStorage.getItem('utc_offset');
-    if (stored !== null) {
-      const parsed = Number(stored);
-      if (!Number.isNaN(parsed) && parsed >= -12 && parsed <= 14) return parsed;
-    }
-    return -3;
-  });
+  const [utcOffset, setUtcOffset] = useState(getStoredUtcOffset);
 
   const [accounts, setAccounts]         = useState<AdminUser[]>([]);
   const [selectedAccount, setSelectedAccount] = useState('');

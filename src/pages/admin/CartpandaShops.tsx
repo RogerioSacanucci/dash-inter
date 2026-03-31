@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, AdminCartpandaShopsResponse } from '../../api/client';
 import DateRangeFilter from '../../components/DateRangeFilter';
+import { getStoredUtcOffset } from '../../utils/dates';
 
 function formatVolume(value: number): string {
   return value.toLocaleString('pt-BR', {
@@ -20,14 +21,7 @@ export default function CartpandaShops() {
   const [period, setPeriod] = useState('30d');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-  const [utcOffset, setUtcOffset] = useState(() => {
-    const stored = localStorage.getItem('utc_offset');
-    if (stored !== null) {
-      const parsed = Number(stored);
-      if (!Number.isNaN(parsed) && parsed >= -12 && parsed <= 14) return parsed;
-    }
-    return -3;
-  });
+  const [utcOffset, setUtcOffset] = useState(getStoredUtcOffset);
 
   useEffect(() => {
     document.title = 'Lojas Internacional';

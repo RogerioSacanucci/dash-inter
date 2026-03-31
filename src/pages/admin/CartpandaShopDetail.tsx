@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api, AdminCartpandaShopDetailResponse } from '../../api/client';
 import DateRangeFilter from '../../components/DateRangeFilter';
+import { getStoredUtcOffset } from '../../utils/dates';
 import Chart from '../../components/Chart';
 
 interface Metric {
@@ -42,14 +43,7 @@ export default function CartpandaShopDetail() {
   const [period, setPeriod] = useState('30d');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-  const [utcOffset, setUtcOffset] = useState(() => {
-    const stored = localStorage.getItem('utc_offset');
-    if (stored !== null) {
-      const parsed = Number(stored);
-      if (!Number.isNaN(parsed) && parsed >= -12 && parsed <= 14) return parsed;
-    }
-    return -3;
-  });
+  const [utcOffset, setUtcOffset] = useState(getStoredUtcOffset);
 
   useEffect(() => {
     if (data?.shop.name) {
