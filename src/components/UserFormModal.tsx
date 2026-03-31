@@ -19,6 +19,8 @@ export default function UserFormModal({ user, onClose, onSave }: UserFormModalPr
   const [payerName, setPayerName] = useState(user?.payer_name ?? '');
   const [payerEmail, setPayerEmail] = useState(user?.payer_email ?? '');
   const [cartpandaParam, setCartpandaParam] = useState(user?.cartpanda_param ?? '');
+  const [facebookPixelId, setFacebookPixelId] = useState(user?.facebook_pixel_id ?? '');
+  const [facebookAccessToken, setFacebookAccessToken] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -96,6 +98,8 @@ export default function UserFormModal({ user, onClose, onSave }: UserFormModalPr
           payer_name: payerName,
           payer_email: payerEmail,
           cartpanda_param: cartpandaParam || null,
+          facebook_pixel_id: facebookPixelId || null,
+          ...(facebookAccessToken ? { facebook_access_token: facebookAccessToken } : {}),
         };
         await onSave(payload);
       } else {
@@ -106,6 +110,8 @@ export default function UserFormModal({ user, onClose, onSave }: UserFormModalPr
           payer_name: payerName,
           payer_email: payerEmail,
           cartpanda_param: cartpandaParam || null,
+          facebook_pixel_id: facebookPixelId || null,
+          ...(facebookAccessToken ? { facebook_access_token: facebookAccessToken } : {}),
         };
         const newUserId = await onSave(payload);
         if (typeof newUserId === 'number' && userShops.length > 0) {
@@ -239,6 +245,40 @@ export default function UserFormModal({ user, onClose, onSave }: UserFormModalPr
               placeholder="Opcional"
               className={inputClass}
             />
+          </div>
+
+          <div className="border-t border-white/[0.06] pt-4 flex flex-col gap-4">
+            <label className="text-xs font-semibold text-white/40 uppercase tracking-widest">
+              Facebook Conversions API
+            </label>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-white/40 uppercase tracking-widest" htmlFor="uf-fb-pixel">
+                Pixel ID
+              </label>
+              <input
+                id="uf-fb-pixel"
+                type="text"
+                value={facebookPixelId}
+                onChange={(e) => setFacebookPixelId(e.target.value)}
+                placeholder="123456789012345"
+                className={inputClass}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-white/40 uppercase tracking-widest" htmlFor="uf-fb-token">
+                Access Token
+              </label>
+              <input
+                id="uf-fb-token"
+                type="password"
+                value={facebookAccessToken}
+                onChange={(e) => setFacebookAccessToken(e.target.value)}
+                placeholder={isEdit && user?.facebook_has_token ? 'Configurado (deixe vazio para manter)' : 'EAAxxxxxxx...'}
+                className={inputClass}
+              />
+            </div>
           </div>
 
           <div className="border-t border-white/[0.06] pt-2 flex flex-col gap-3">

@@ -43,6 +43,8 @@ export interface AdminUser {
   payer_name: string;
   role: string;
   cartpanda_param: string | null;
+  facebook_pixel_id: string | null;
+  facebook_has_token: boolean;
   active: boolean;
   created_at: string;
   shops: AdminCartpandaShop[];
@@ -91,6 +93,8 @@ export interface CreateUserPayload {
   payer_name?: string;
   role: string;
   cartpanda_param?: string | null;
+  facebook_pixel_id?: string | null;
+  facebook_access_token?: string | null;
   success_url?: string;
   failed_url?: string;
 }
