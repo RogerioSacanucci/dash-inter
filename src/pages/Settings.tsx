@@ -195,7 +195,7 @@ export default function Settings() {
                       </p>
                     </div>
                     <span className="shrink-0 bg-surface-1 border border-white/[0.08] text-white/50 text-[11px] rounded px-1.5 py-0.5">
-                      {dest.notify}
+                      {NOTIFY_OPTIONS.find((o) => o.value === dest.notify)?.label ?? dest.notify}
                     </span>
                     <button
                       type="button"
