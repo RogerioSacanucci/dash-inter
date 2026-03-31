@@ -52,6 +52,14 @@ export default function UserBalancePanel({ userId }: Props) {
                 {loading ? '—' : formatBalance(data?.balance.balance_pending ?? '0')}
               </p>
             </div>
+            <div className="pl-8 pr-8 flex flex-col gap-1.5">
+              <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest">
+                Reserva
+              </p>
+              <p className="text-2xl font-bold tracking-tight tabular-nums leading-none text-white">
+                {loading ? '—' : formatBalance(data?.balance.balance_reserve ?? '0')}
+              </p>
+            </div>
             <div className="pl-8 flex flex-col gap-1.5">
               <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest">
                 Saldo Liberado
