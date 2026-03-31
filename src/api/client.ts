@@ -54,6 +54,7 @@ export interface AdminUser {
 
 export interface Balance {
   balance_pending: string;
+  balance_reserve: string;
   balance_released: string;
   currency: string;
 }
