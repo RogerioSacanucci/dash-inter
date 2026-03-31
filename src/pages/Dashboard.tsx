@@ -1,17 +1,11 @@
 import { useState, useEffect } from 'react';
 import { api, AdminUser } from '../api/client';
+import DateRangeFilter from '../components/DateRangeFilter';
 import { useAuth } from '../hooks/useAuth';
 import { useDashboardStats } from '../hooks/useDashboardStats';
 import StatsCards from '../components/StatsCards';
 import CartpandaStatsCards from '../components/CartpandaStatsCards';
 import Chart from '../components/Chart';
-
-const QUICK_PERIODS = [
-  { label: 'Hoje',    value: 'today'     },
-  { label: 'Ontem',   value: 'yesterday' },
-  { label: '7 dias',  value: '7d'        },
-  { label: '30 dias', value: '30d'       },
-];
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -20,8 +14,15 @@ export default function Dashboard() {
   const [period, setPeriod]         = useState('30d');
   const [dateFrom, setDateFrom]     = useState('');
   const [dateTo, setDateTo]         = useState('');
-  const [showCustom, setShowCustom] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [utcOffset, setUtcOffset] = useState(() => {
+    const stored = localStorage.getItem('utc_offset');
+    if (stored !== null) {
+      const parsed = Number(stored);
+      if (!Number.isNaN(parsed) && parsed >= -12 && parsed <= 14) return parsed;
+    }
+    return -3;
+  });
 
   const [accounts, setAccounts]             = useState<AdminUser[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string>('');
@@ -48,18 +49,6 @@ export default function Dashboard() {
       api.users().then(({ users }) => setAccounts(users)).catch(() => {});
     }
   }, [isAdmin]);
-
-  function selectPeriod(value: string) {
-    setPeriod(value);
-    setShowCustom(false);
-    setDateFrom('');
-    setDateTo('');
-  }
-
-  function handleCustom() {
-    setShowCustom(true);
-    setPeriod('custom');
-  }
 
   const ov = stats?.overview;
 
@@ -124,51 +113,22 @@ export default function Dashboard() {
           )}
 
           {/* Period selector */}
-          <div className="flex bg-surface-1 border border-white/[0.06] rounded-lg p-1 gap-0.5">
-            {QUICK_PERIODS.map((p) => (
-              <button
-                key={p.value}
-                type="button"
-                onClick={() => selectPeriod(p.value)}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0 ${
-                  period === p.value && !showCustom
-                    ? 'bg-surface-2 text-white shadow-sm'
-                    : 'text-white/40 hover:text-white/70'
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={handleCustom}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0 ${
-                showCustom
-                  ? 'bg-surface-2 text-white shadow-sm'
-                  : 'text-white/40 hover:text-white/70'
-              }`}
-            >
-              Personalizado
-            </button>
-          </div>
-
-          {showCustom && (
-            <div className="flex items-center gap-2">
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                className="bg-surface-1 border border-white/[0.08] rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-brand/50 transition-colors"
-              />
-              <span className="text-white/30 text-sm">até</span>
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                className="bg-surface-1 border border-white/[0.08] rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-brand/50 transition-colors"
-              />
-            </div>
-          )}
+          <DateRangeFilter
+            period={period}
+            dateFrom={dateFrom}
+            dateTo={dateTo}
+            utcOffset={utcOffset}
+            onPeriodChange={(p, from, to) => {
+              setPeriod(p);
+              setDateFrom(from);
+              setDateTo(to);
+            }}
+            onCustomDatesChange={(from, to) => {
+              setDateFrom(from);
+              setDateTo(to);
+            }}
+            onUtcOffsetChange={setUtcOffset}
+          />
         </div>
       </div>
 
