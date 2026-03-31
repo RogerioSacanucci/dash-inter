@@ -25,8 +25,6 @@ export interface LoginResponse {
     id: number;
     email: string;
     payer_email: string;
-    pushcut_url?: string;
-    pushcut_notify?: "all" | "created" | "paid";
     role?: string;
     cartpanda_param?: string | null;
   };
@@ -95,11 +93,24 @@ export interface CreateUserPayload {
   cartpanda_param?: string | null;
   success_url?: string;
   failed_url?: string;
-  pushcut_url?: string;
-  pushcut_notify?: string;
 }
 
 export type UpdateUserPayload = Partial<Omit<CreateUserPayload, 'password'> & { active: boolean }>;
+
+export interface UserPushcutUrl {
+  id: number;
+  url: string;
+  notify: 'all' | 'created' | 'paid';
+  label: string | null;
+  created_at: string;
+}
+export interface UserPushcutUrlsResponse { data: UserPushcutUrl[]; }
+export interface CreatePushcutUrlPayload {
+  url: string;
+  notify: 'all' | 'created' | 'paid';
+  label?: string;
+}
+export type UpdatePushcutUrlPayload = Partial<CreatePushcutUrlPayload>;
 
 // User-facing
 export interface UserLink {
@@ -336,13 +347,25 @@ export const api = {
       method: "DELETE",
     }),
 
-  updateSettings: (data: {
-    pushcut_url: string;
-    pushcut_notify: "all" | "created" | "paid";
-  }) =>
-    request<{ user: LoginResponse["user"] }>("/api/auth/update", {
-      method: "POST",
+  // Pushcut URLs
+  pushcutUrls: () =>
+    request<UserPushcutUrlsResponse>('/api/pushcut-urls'),
+
+  createPushcutUrl: (data: CreatePushcutUrlPayload) =>
+    request<{ data: UserPushcutUrl }>('/api/pushcut-urls', {
+      method: 'POST',
       body: JSON.stringify(data),
+    }),
+
+  updatePushcutUrl: (id: number, data: UpdatePushcutUrlPayload) =>
+    request<{ data: UserPushcutUrl }>(`/api/pushcut-urls/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  deletePushcutUrl: (id: number) =>
+    request<{ ok: boolean }>(`/api/pushcut-urls/${id}`, {
+      method: 'DELETE',
     }),
 
   // User-facing — links
