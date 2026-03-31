@@ -14,6 +14,7 @@ interface FormState {
   label: string;
   external_url: string;
   file_path: string;
+  is_static: boolean;
 }
 
 const emptyForm: FormState = {
@@ -22,6 +23,7 @@ const emptyForm: FormState = {
   label: '',
   external_url: '',
   file_path: '',
+  is_static: false,
 };
 
 export default function UserLinkManager() {
@@ -34,6 +36,14 @@ export default function UserLinkManager() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+
+  function copyLink(id: number, url: string) {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  }
 
   const fetchData = useCallback(() => {
     setLoading(true);
@@ -64,10 +74,11 @@ export default function UserLinkManager() {
     setEditingId(link.id);
     setForm({
       user_id: String(link.user_id),
-      aapanel_config_id: String(link.aapanel_config_id),
+      aapanel_config_id: link.aapanel_config_id ? String(link.aapanel_config_id) : '',
       label: link.label,
       external_url: link.external_url,
-      file_path: link.file_path,
+      file_path: link.file_path ?? '',
+      is_static: link.aapanel_config_id === null,
     });
     setShowForm(true);
   }
@@ -87,10 +98,10 @@ export default function UserLinkManager() {
       if (editingId === null) {
         const payload: CreateUserLinkPayload = {
           user_id: Number(form.user_id),
-          aapanel_config_id: Number(form.aapanel_config_id),
+          aapanel_config_id: form.is_static ? null : Number(form.aapanel_config_id),
           label: form.label,
           external_url: form.external_url,
-          file_path: form.file_path,
+          file_path: form.is_static ? null : form.file_path,
         };
         const created = await api.adminCreateUserLink(payload);
         setLinks((prev) => [created, ...prev]);
@@ -98,7 +109,7 @@ export default function UserLinkManager() {
         const payload: UpdateUserLinkPayload = {
           label: form.label,
           external_url: form.external_url,
-          file_path: form.file_path,
+          file_path: form.is_static ? null : form.file_path,
         };
         const updated = await api.adminUpdateUserLink(editingId, payload);
         setLinks((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
@@ -122,10 +133,13 @@ export default function UserLinkManager() {
     }
   }
 
-  function updateField(field: keyof FormState, value: string) {
+  function updateField(field: keyof FormState, value: string | boolean) {
     setForm((prev) => {
       if (field === 'user_id') {
-        return { ...prev, user_id: value, aapanel_config_id: '' };
+        return { ...prev, user_id: value as string, aapanel_config_id: '' };
+      }
+      if (field === 'is_static') {
+        return { ...prev, is_static: value as boolean, aapanel_config_id: '' };
       }
       return { ...prev, [field]: value };
     });
@@ -168,43 +182,72 @@ export default function UserLinkManager() {
             {editingId === null ? 'Novo link' : 'Editar link'}
           </h3>
 
-          {editingId === null && (
-            <>
-              <div>
-                <label className="block text-sm text-white/60 mb-1">Utilizador</label>
-                <select
-                  value={form.user_id}
-                  onChange={(e) => updateField('user_id', e.target.value)}
-                  required
-                  className="w-full bg-surface-1 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand"
-                >
-                  <option value="">Selecione...</option>
-                  {users.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.email}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          {/* Tipo de link */}
+          <div>
+            <label className="block text-sm text-white/60 mb-2">Tipo</label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => updateField('is_static', false)}
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  !form.is_static
+                    ? 'bg-brand text-white'
+                    : 'bg-surface-1 text-white/50 hover:text-white border border-zinc-800'
+                }`}
+              >
+                Ficheiro
+              </button>
+              <button
+                type="button"
+                onClick={() => updateField('is_static', true)}
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  form.is_static
+                    ? 'bg-brand text-white'
+                    : 'bg-surface-1 text-white/50 hover:text-white border border-zinc-800'
+                }`}
+              >
+                Estático
+              </button>
+            </div>
+          </div>
 
-              <div>
-                <label className="block text-sm text-white/60 mb-1">Servidor aaPanel</label>
-                <select
-                  value={form.aapanel_config_id}
-                  onChange={(e) => updateField('aapanel_config_id', e.target.value)}
-                  required
-                  disabled={!form.user_id}
-                  className="w-full bg-surface-1 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <option value="">Selecione...</option>
-                  {filteredConfigs.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </>
+          {editingId === null && (
+            <div>
+              <label className="block text-sm text-white/60 mb-1">Utilizador</label>
+              <select
+                value={form.user_id}
+                onChange={(e) => updateField('user_id', e.target.value)}
+                required
+                className="w-full bg-surface-1 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand"
+              >
+                <option value="">Selecione...</option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.email}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {editingId === null && !form.is_static && (
+            <div>
+              <label className="block text-sm text-white/60 mb-1">Servidor aaPanel</label>
+              <select
+                value={form.aapanel_config_id}
+                onChange={(e) => updateField('aapanel_config_id', e.target.value)}
+                required
+                disabled={!form.user_id}
+                className="w-full bg-surface-1 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <option value="">Selecione...</option>
+                {filteredConfigs.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           )}
 
           <div>
@@ -230,17 +273,19 @@ export default function UserLinkManager() {
             />
           </div>
 
-          <div>
-            <label className="block text-sm text-white/60 mb-1">Caminho do ficheiro</label>
-            <input
-              type="text"
-              value={form.file_path}
-              onChange={(e) => updateField('file_path', e.target.value)}
-              required
-              placeholder="/www/wwwroot/meusite.com/index.html"
-              className="w-full bg-surface-1 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white font-mono text-xs placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-brand"
-            />
-          </div>
+          {!form.is_static && (
+            <div>
+              <label className="block text-sm text-white/60 mb-1">Caminho do ficheiro</label>
+              <input
+                type="text"
+                value={form.file_path}
+                onChange={(e) => updateField('file_path', e.target.value)}
+                required
+                placeholder="/www/wwwroot/meusite.com/index.html"
+                className="w-full bg-surface-1 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white font-mono text-xs placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-brand"
+              />
+            </div>
+          )}
 
           <div className="flex gap-3 pt-1">
             <button
@@ -273,8 +318,22 @@ export default function UserLinkManager() {
               className="bg-surface-2 border border-zinc-800 rounded-xl px-5 py-4"
             >
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-white">{link.label}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-white">{link.label}</span>
+                  {link.aapanel_config_id === null && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-800 text-white/40">
+                      estático
+                    </span>
+                  )}
+                </div>
                 <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => copyLink(link.id, link.external_url)}
+                    className="px-3 py-1 text-xs text-white/60 hover:text-white border border-zinc-800 rounded-lg transition-colors"
+                  >
+                    {copiedId === link.id ? 'Copiado!' : 'Copiar'}
+                  </button>
                   <button
                     type="button"
                     onClick={() => openEdit(link)}
@@ -292,11 +351,16 @@ export default function UserLinkManager() {
                 </div>
               </div>
               <p className="text-xs text-white/40 mt-1">
-                {link.user_email} &middot; {link.aapanel_config_label}
+                {link.user_email}
+                {link.aapanel_config_label && (
+                  <> &middot; {link.aapanel_config_label}</>
+                )}
               </p>
-              <p className="text-xs text-white/30 mt-0.5 font-mono min-w-0 truncate">
-                {link.file_path}
-              </p>
+              {link.file_path && (
+                <p className="text-xs text-white/30 mt-0.5 font-mono min-w-0 truncate">
+                  {link.file_path}
+                </p>
+              )}
             </div>
           ))}
         </div>

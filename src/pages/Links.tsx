@@ -1,9 +1,18 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLinks } from '../hooks/useLinks';
 
 export default function Links() {
   const { links, loading, error } = useLinks();
   const navigate = useNavigate();
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+
+  function copyLink(id: number, url: string) {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  }
 
   if (loading) {
     return (
@@ -54,14 +63,24 @@ export default function Links() {
                 {link.external_url}
               </a>
             </div>
-            <button
-              onClick={() =>
-                navigate(`/links/${link.id}/edit`, { state: { link } })
-              }
-              className="w-full bg-brand hover:bg-brand-hover text-white text-xs font-medium py-2 px-4 rounded-lg transition-colors"
-            >
-              Editar arquivo
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => copyLink(link.id, link.external_url)}
+                className="flex-1 bg-surface-2 hover:bg-zinc-800 border border-zinc-800 text-white/60 hover:text-white text-xs font-medium py-2 px-4 rounded-lg transition-colors"
+              >
+                {copiedId === link.id ? 'Copiado!' : 'Copiar link'}
+              </button>
+              {link.file_path && (
+                <button
+                  onClick={() =>
+                    navigate(`/links/${link.id}/edit`, { state: { link } })
+                  }
+                  className="flex-1 bg-brand hover:bg-brand-hover text-white text-xs font-medium py-2 px-4 rounded-lg transition-colors"
+                >
+                  Editar arquivo
+                </button>
+              )}
+            </div>
           </div>
         ))}
       </div>

@@ -4,6 +4,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const token = localStorage.getItem("token");
   const headers: HeadersInit = {
     "Content-Type": "application/json",
+    "Accept": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options?.headers,
   };
@@ -105,7 +106,7 @@ export interface UserLink {
   id: number;
   label: string;
   external_url: string;
-  file_path: string;
+  file_path: string | null;
 }
 export interface UserLinksResponse { data: UserLink[]; }
 
@@ -121,13 +122,13 @@ export type UpdateAaPanelConfigPayload = Partial<Omit<CreateAaPanelConfigPayload
 // Admin — user links
 export interface AdminUserLink {
   id: number; user_id: number; user_email: string;
-  aapanel_config_id: number; aapanel_config_label: string;
-  label: string; external_url: string; file_path: string; created_at: string;
+  aapanel_config_id: number | null; aapanel_config_label: string | null;
+  label: string; external_url: string; file_path: string | null; created_at: string;
 }
 export interface AdminUserLinksResponse { data: AdminUserLink[]; }
 export interface CreateUserLinkPayload {
-  user_id: number; aapanel_config_id: number;
-  label: string; external_url: string; file_path: string;
+  user_id: number; aapanel_config_id?: number | null;
+  label: string; external_url: string; file_path?: string | null;
 }
 export type UpdateUserLinkPayload = Partial<Pick<CreateUserLinkPayload, 'label' | 'external_url' | 'file_path'>>;
 
