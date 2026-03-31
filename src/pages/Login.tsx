@@ -16,23 +16,27 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-canvas flex items-center justify-center px-4">
-      {/* Subtle radial glow behind the form */}
-      <div className="pointer-events-none fixed inset-0 flex items-center justify-center">
-        <div className="w-[600px] h-[600px] rounded-full bg-brand/[0.04] blur-3xl" />
-      </div>
+      {/* Background image */}
+      <img
+        src="/login.png"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 w-full h-full object-cover select-none"
+      />
 
       <div className="relative w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-10">
           <div className="flex items-center justify-center mb-2">
-            <img src="/logo.png" alt="Fractal" className="h-10 w-auto" />
+            <img src="/logo.png" alt="Fractal" className="h-16 w-auto" />
           </div>
           <p className="text-white/40 text-sm mt-2">Entre na sua conta</p>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="bg-surface-1 rounded-2xl border border-white/[0.07] p-8 flex flex-col gap-5"
+          className="rounded-2xl border border-white/[0.07] p-8 flex flex-col gap-5"
+          style={{ background: 'rgba(0, 0, 0, 0.81)' }}
         >
           {error && (
             <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-sm text-red-400">
