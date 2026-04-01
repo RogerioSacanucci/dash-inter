@@ -3,7 +3,7 @@ import { api, CartpandaOrdersResponse, AdminUser } from '../api/client';
 import { useAuth } from '../hooks/useAuth';
 import CartpandaOrderTable from '../components/CartpandaOrderTable';
 import DateRangeFilter from '../components/DateRangeFilter';
-import { getStoredUtcOffset } from '../utils/dates';
+import { getStoredUtcOffset, periodToDates } from '../utils/dates';
 
 const STATUSES = ['', 'PENDING', 'COMPLETED', 'FAILED', 'DECLINED', 'REFUNDED'];
 const STATUS_LABELS: Record<string, string> = {
@@ -24,12 +24,12 @@ export default function CartpandaOrders() {
   const [error, setError] = useState<string | null>(null);
 
   const [status, setStatus] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  const [utcOffset, setUtcOffset] = useState(getStoredUtcOffset);
+  const [period, setPeriod] = useState('today');
+  const [dateFrom, setDateFrom] = useState(() => periodToDates('today', getStoredUtcOffset()).from);
+  const [dateTo, setDateTo] = useState(() => periodToDates('today', getStoredUtcOffset()).to);
   const [orderId, setOrderId] = useState('');
   const [page, setPage] = useState(1);
-  const [period, setPeriod] = useState('');
-  const [utcOffset, setUtcOffset] = useState(getStoredUtcOffset);
 
   const [accounts, setAccounts]         = useState<AdminUser[]>([]);
   const [selectedAccount, setSelectedAccount] = useState('');

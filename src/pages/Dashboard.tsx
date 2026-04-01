@@ -12,7 +12,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
 
-  const [period, setPeriod]         = useState('30d');
+  const [period, setPeriod]         = useState('today');
   const [dateFrom, setDateFrom]     = useState('');
   const [dateTo, setDateTo]         = useState('');
   const [retryCount, setRetryCount] = useState(0);
@@ -259,6 +259,7 @@ export default function Dashboard() {
               data={cpStats.chart.map((d) => ({ ...d, transactions: d.orders }))}
               hourly={cpStats.hourly}
               secondaryLabel="pedidos"
+              currencySymbol="$"
             />
           </div>
         </>

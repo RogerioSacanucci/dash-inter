@@ -3,7 +3,7 @@ import { api, Transaction, TransactionsResponse, AdminUser } from '../api/client
 import { useAuth } from '../hooks/useAuth';
 import TransactionTable from '../components/TransactionTable';
 import DateRangeFilter from '../components/DateRangeFilter';
-import { getStoredUtcOffset } from '../utils/dates';
+import { getStoredUtcOffset, periodToDates } from '../utils/dates';
 
 const STATUSES = ['', 'PENDING', 'COMPLETED', 'FAILED', 'EXPIRED', 'DECLINED'];
 const STATUS_LABELS: Record<string, string> = {
@@ -25,12 +25,12 @@ export default function Transactions() {
 
   const [status, setStatus] = useState('');
   const [method, setMethod] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  const [utcOffset, setUtcOffset] = useState(getStoredUtcOffset);
+  const [period, setPeriod] = useState('today');
+  const [dateFrom, setDateFrom] = useState(() => periodToDates('today', getStoredUtcOffset()).from);
+  const [dateTo, setDateTo] = useState(() => periodToDates('today', getStoredUtcOffset()).to);
   const [txId, setTxId] = useState('');
   const [page, setPage] = useState(1);
-  const [period, setPeriod] = useState('');
-  const [utcOffset, setUtcOffset] = useState(getStoredUtcOffset);
 
   const [accounts, setAccounts]         = useState<AdminUser[]>([]);
   const [selectedAccount, setSelectedAccount] = useState('');

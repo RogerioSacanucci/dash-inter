@@ -18,7 +18,7 @@ export default function CartpandaShops() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [period, setPeriod] = useState('30d');
+  const [period, setPeriod] = useState('today');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [utcOffset, setUtcOffset] = useState(getStoredUtcOffset);
