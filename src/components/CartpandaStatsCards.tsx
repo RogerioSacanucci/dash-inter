@@ -34,11 +34,12 @@ export default function CartpandaStatsCards({ overview }: Props) {
   };
 
   const metrics: Metric[] = [
-    { label: 'Volume', value: fmt(overview.total_volume), valueColor: 'text-brand' },
+    { label: 'Vol. Bruto', value: fmt(overview.total_volume), valueColor: 'text-brand' },
+    { label: 'Vol. Líquido', value: fmt(overview.net_volume), sub: '-8.5% taxa -5% reserva' },
     { label: 'Pedidos', value: overview.total_orders.toString(), sub: `${overview.pending} pendentes` },
     { label: 'Completos', value: overview.completed.toString() },
-    { label: 'Reembolsos', value: overview.refunded.toString() },
-    { label: 'Chargebacks', value: overview.declined.toString() },
+    { label: 'Reembolsos', value: fmt(overview.refunded_volume), sub: `${overview.refunded} pedidos` },
+    { label: 'Chargebacks', value: fmt(overview.chargeback_volume), sub: `${overview.declined} pedidos` },
     { label: 'A Liberar', value: fmtBalance(overview.balance_pending) },
     { label: 'Liberado', value: fmtBalance(overview.balance_released), valueColor: parseFloat(overview.balance_released) < 0 ? 'text-red-400' : undefined },
   ];

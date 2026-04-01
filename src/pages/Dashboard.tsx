@@ -5,7 +5,6 @@ import { getStoredUtcOffset } from '../utils/dates';
 import { useAuth } from '../hooks/useAuth';
 import { useDashboardStats } from '../hooks/useDashboardStats';
 import StatsCards from '../components/StatsCards';
-import CartpandaStatsCards from '../components/CartpandaStatsCards';
 import Chart from '../components/Chart';
 
 export default function Dashboard() {
@@ -17,6 +16,7 @@ export default function Dashboard() {
   const [dateTo, setDateTo]         = useState('');
   const [retryCount, setRetryCount] = useState(0);
   const [utcOffset, setUtcOffset] = useState(getStoredUtcOffset);
+  const [chartMetric, setChartMetric] = useState<'total_volume' | 'net_volume' | 'orders'>('total_volume');
 
   const [accounts, setAccounts]             = useState<AdminUser[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string>('');
@@ -48,17 +48,19 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
+      {/* Welcome */}
+      <div>
+        <h1 className="text-xl font-bold text-white">Bem-vindo, {user?.email}!</h1>
+      </div>
+
+      {/* Header controls */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-white">Dashboard</h1>
-          <p className="text-sm text-white/40 mt-0.5">
-            {isAdmin
-              ? selectedAccount
-                ? `Conta: ${accounts.find((a) => a.id === Number(selectedAccount))?.email ?? ''}`
-                : 'Visão geral de todas as contas'
-              : 'Visão geral dos seus pagamentos'}
-          </p>
+        <div className="text-sm text-white/40">
+          {isAdmin && (
+            selectedAccount
+              ? `Conta: ${accounts.find((a) => a.id === Number(selectedAccount))?.email ?? ''}`
+              : 'Visão geral de todas as contas'
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -236,31 +238,63 @@ export default function Dashboard() {
         </>
       ) : activePlatform === 'cartpanda' && cpStats ? (
         <>
-          <CartpandaStatsCards overview={cpStats.overview} />
+          {/* Balance badge */}
+          <div className="flex items-center justify-end">
+            <div className="bg-surface-1 border border-white/[0.06] rounded-lg px-3 py-1.5 text-sm">
+              <span className="text-white/40">Disponível para saque:</span>{' '}
+              <span className="text-brand font-semibold tabular-nums">
+                ${' '}{parseFloat(cpStats.overview.balance_released || '0').toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+            </div>
+          </div>
 
-          {/* Volume chart — Cartpanda */}
+          {/* Main chart card */}
           <div className="bg-surface-1 rounded-2xl border border-white/[0.06] p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-white">
-                {cpStats.hourly ? 'Pedidos por Hora' : 'Volume de Pedidos'}
-              </h2>
-              <div className="flex items-center gap-4 text-xs text-white/30">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-0.5 bg-brand inline-block rounded" />
-                  Volume ($)
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-0 inline-block border-t-2 border-dashed border-indigo-400" />
-                  Pedidos
-                </span>
-              </div>
+              <select
+                value={chartMetric}
+                onChange={(e) => setChartMetric(e.target.value as typeof chartMetric)}
+                className="bg-surface-2 border border-white/[0.06] rounded-lg px-3 py-2 text-sm text-white font-medium outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition-colors"
+              >
+                <option value="total_volume">Total de vendas</option>
+                <option value="net_volume">Total de vendas líquido</option>
+                <option value="orders">Total de pedidos</option>
+              </select>
+              <span className="bg-surface-2 border border-white/[0.06] rounded-lg px-3 py-1.5 text-xs font-semibold text-white/60">
+                USD
+              </span>
             </div>
+
+            <p className="text-4xl font-bold text-white tabular-nums mb-6">
+              {chartMetric === 'orders'
+                ? cpStats.overview.total_orders
+                : `$ ${(chartMetric === 'net_volume' ? cpStats.overview.net_volume : cpStats.overview.total_volume)
+                    .toFixed(2).replace('.', ',')}`}
+            </p>
+
             <Chart
               data={cpStats.chart.map((d) => ({ ...d, transactions: d.orders }))}
               hourly={cpStats.hourly}
+              showSecondary={false}
+              dataKey={chartMetric === 'orders' ? 'transactions' : 'volume'}
+              currencySymbol={chartMetric === 'orders' ? '' : '$'}
               secondaryLabel="pedidos"
-              currencySymbol="$"
             />
+          </div>
+
+          {/* Two mini-cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-surface-1 rounded-2xl border border-white/[0.06] p-5">
+              <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest mb-2">Total de pedidos</p>
+              <p className="text-3xl font-bold text-white tabular-nums">{cpStats.overview.total_orders}</p>
+              {cpStats.overview.pending > 0 && (
+                <p className="text-xs text-white/30 mt-1">{cpStats.overview.pending} pendentes</p>
+              )}
+            </div>
+            <div className="bg-surface-1 rounded-2xl border border-white/[0.06] p-5">
+              <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest mb-2">Completos</p>
+              <p className="text-3xl font-bold text-white tabular-nums">{cpStats.overview.completed}</p>
+            </div>
           </div>
         </>
       ) : null}

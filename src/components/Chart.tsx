@@ -23,6 +23,8 @@ interface Props {
   hourly?: boolean;
   secondaryLabel?: string;
   currencySymbol?: string;
+  showSecondary?: boolean;
+  dataKey?: string;
 }
 
 function formatDate(dateStr: string) {
@@ -31,22 +33,24 @@ function formatDate(dateStr: string) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function CustomTooltip({ active, payload, label, hourly, secondaryLabel, currencySymbol }: any) {
+function CustomTooltip({ active, payload, label, hourly, secondaryLabel, currencySymbol, showSecondary }: any) {
   if (!active || !payload?.length) return null;
+  const isCount = !currencySymbol;
+  const primaryValue = payload[0]?.value ?? 0;
   return (
     <div className="bg-surface-2 border border-white/[0.08] rounded-xl shadow-xl p-3 text-sm">
       <p className="font-semibold text-white/60 mb-2 text-xs uppercase tracking-wide">
         {hourly ? label : formatDate(label)}
       </p>
       <p className="text-brand font-bold">
-        {currencySymbol} {(payload[0]?.value ?? 0).toFixed(2).replace('.', ',')}
+        {isCount ? primaryValue : `${currencySymbol} ${primaryValue.toFixed(2).replace('.', ',')}`}
       </p>
-      <p className="text-white/40 text-xs mt-0.5">{payload[1]?.value ?? 0} {secondaryLabel}</p>
+      {showSecondary && <p className="text-white/40 text-xs mt-0.5">{payload[1]?.value ?? 0} {secondaryLabel}</p>}
     </div>
   );
 }
 
-export default function Chart({ data, hourly = false, secondaryLabel = 'transações', currencySymbol = '€' }: Props) {
+export default function Chart({ data, hourly = false, secondaryLabel = 'transações', currencySymbol = '€', showSecondary = true, dataKey = 'volume' }: Props) {
   if (!data.length) {
     return (
       <div className="flex items-center justify-center h-48 text-white/20 text-sm">
@@ -59,6 +63,7 @@ export default function Chart({ data, hourly = false, secondaryLabel = 'transaç
   const totalVolume = data.reduce((s, d) => s + d.volume, 0).toFixed(2).replace('.', ',');
   const totalTx     = data.reduce((s, d) => s + d.transactions, 0);
   const ariaLabel   = `Gráfico de pagamentos: ${currencySymbol}${totalVolume} em volume, ${totalTx} ${secondaryLabel}`;
+  const isCount = !currencySymbol;
 
   return (
     <div role="img" aria-label={ariaLabel}>
@@ -82,24 +87,26 @@ export default function Chart({ data, hourly = false, secondaryLabel = 'transaç
             tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.25)', fontFamily: 'Outfit' }}
             axisLine={false}
             tickLine={false}
-            tickFormatter={(v) => `${currencySymbol}${v}`}
+            tickFormatter={(v) => isCount ? String(v) : `${currencySymbol}${v}`}
           />
-          <Tooltip content={<CustomTooltip hourly={hourly} secondaryLabel={secondaryLabel} currencySymbol={currencySymbol} />} />
+          <Tooltip content={<CustomTooltip hourly={hourly} secondaryLabel={secondaryLabel} currencySymbol={currencySymbol} showSecondary={showSecondary} />} />
           <Area
             type="monotone"
-            dataKey="volume"
+            dataKey={dataKey}
             stroke={BRAND}
             strokeWidth={2}
             fill="url(#volGrad)"
           />
-          <Area
-            type="monotone"
-            dataKey="transactions"
-            stroke={INDIGO}
-            strokeWidth={1.5}
-            fill="transparent"
-            strokeDasharray="4 2"
-          />
+          {showSecondary && (
+            <Area
+              type="monotone"
+              dataKey="transactions"
+              stroke={INDIGO}
+              strokeWidth={1.5}
+              fill="transparent"
+              strokeDasharray="4 2"
+            />
+          )}
         </AreaChart>
       </ResponsiveContainer>
     </div>

@@ -226,7 +226,11 @@ export interface CartpandaStatsResponse {
     declined: number;
     refunded: number;
     total_volume: number;
+    net_volume: number;
+    refunded_volume: number;
+    chargeback_volume: number;
     balance_pending: string;
+    balance_reserve: string;
     balance_released: string;
   };
   chart: { date?: string; hour?: string; orders: number; volume: number }[];

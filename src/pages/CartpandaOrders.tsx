@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { api, CartpandaOrdersResponse, AdminUser } from '../api/client';
+import { api, CartpandaOrdersResponse, CartpandaStatsResponse, AdminUser } from '../api/client';
 import { useAuth } from '../hooks/useAuth';
 import CartpandaOrderTable from '../components/CartpandaOrderTable';
+import CartpandaStatsCards from '../components/CartpandaStatsCards';
 import DateRangeFilter from '../components/DateRangeFilter';
 import { getStoredUtcOffset, periodToDates } from '../utils/dates';
 
@@ -20,6 +21,7 @@ export default function CartpandaOrders() {
   const isAdmin = user?.role === 'admin';
 
   const [data, setData] = useState<CartpandaOrdersResponse | null>(null);
+  const [cpStats, setCpStats] = useState<CartpandaStatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,7 +62,17 @@ export default function CartpandaOrders() {
       .then(setData)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [status, dateFrom, dateTo, orderId, page, isAdmin, selectedAccount, utcOffset]);
+
+    api.cartpandaStats(
+      period || 'today',
+      dateFrom || undefined,
+      dateTo || undefined,
+      isAdmin && selectedAccount ? selectedAccount : undefined,
+      utcOffset,
+    )
+      .then(setCpStats)
+      .catch(() => {});
+  }, [status, dateFrom, dateTo, orderId, page, period, isAdmin, selectedAccount, utcOffset]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -160,6 +172,9 @@ export default function CartpandaOrders() {
           )}
         </form>
       </div>
+
+      {/* Stats */}
+      {cpStats && <CartpandaStatsCards overview={cpStats.overview} />}
 
       {/* Table */}
       <div className="bg-surface-1 rounded-2xl border border-white/[0.06]">
