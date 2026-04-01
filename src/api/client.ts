@@ -293,11 +293,13 @@ export const api = {
     dateFrom?: string,
     dateTo?: string,
     userId?: number,
+    utcOffset?: number,
   ) => {
     const params = new URLSearchParams({ period });
     if (dateFrom) params.set("date_from", dateFrom);
     if (dateTo) params.set("date_to", dateTo);
     if (userId !== undefined) params.set("user_id", String(userId));
+    if (utcOffset !== undefined) params.set("utc_offset", String(utcOffset));
     return request<StatsResponse>(`/api/stats?${params}`);
   },
 
@@ -309,6 +311,7 @@ export const api = {
       date_to?: string;
       order_id?: string;
       user_id?: string;
+      utc_offset?: string;
     } = {},
   ) => {
     const qs = new URLSearchParams(
@@ -322,11 +325,13 @@ export const api = {
     dateFrom?: string,
     dateTo?: string,
     userId?: string,
+    utcOffset?: number,
   ) => {
     const params = new URLSearchParams({ period });
     if (dateFrom) params.set("date_from", dateFrom);
     if (dateTo) params.set("date_to", dateTo);
     if (userId) params.set("user_id", userId);
+    if (utcOffset !== undefined) params.set("utc_offset", String(utcOffset));
     return request<CartpandaStatsResponse>(`/api/internacional-stats?${params}`);
   },
 
@@ -400,17 +405,19 @@ export const api = {
     request<{ message: string }>(`/api/admin/user-links/${id}`, { method: 'DELETE' }),
 
   // Admin — CartPanda shops
-  adminCartpandaShops: (period: string = '30d', dateFrom?: string, dateTo?: string) => {
+  adminCartpandaShops: (period: string = '30d', dateFrom?: string, dateTo?: string, utcOffset?: number) => {
     const params = new URLSearchParams({ period });
     if (dateFrom) params.set('date_from', dateFrom);
     if (dateTo) params.set('date_to', dateTo);
+    if (utcOffset !== undefined) params.set('utc_offset', String(utcOffset));
     return request<AdminCartpandaShopsResponse>(`/api/admin/internacional-shops?${params}`);
   },
 
-  adminCartpandaShopDetail: (id: number, period: string = '30d', dateFrom?: string, dateTo?: string) => {
+  adminCartpandaShopDetail: (id: number, period: string = '30d', dateFrom?: string, dateTo?: string, utcOffset?: number) => {
     const params = new URLSearchParams({ period });
     if (dateFrom) params.set('date_from', dateFrom);
     if (dateTo) params.set('date_to', dateTo);
+    if (utcOffset !== undefined) params.set('utc_offset', String(utcOffset));
     return request<AdminCartpandaShopDetailResponse>(`/api/admin/internacional-shops/${id}?${params}`);
   },
 

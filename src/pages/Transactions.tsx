@@ -56,12 +56,13 @@ export default function Transactions() {
     if (dateTo) params.date_to = dateTo;
     if (txId.trim()) params.transaction_id = txId.trim();
     if (isAdmin && selectedAccount) params.user_id = selectedAccount;
+    params.utc_offset = String(utcOffset);
 
     api.transactions(params)
       .then(setData)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [status, method, dateFrom, dateTo, txId, page, isAdmin, selectedAccount]);
+  }, [status, method, dateFrom, dateTo, txId, page, isAdmin, selectedAccount, utcOffset]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 

@@ -8,6 +8,7 @@ interface UseDashboardStatsOptions {
   dateFrom: string;
   dateTo: string;
   selectedAccount: string;
+  utcOffset: number;
   retryCount?: number;
 }
 
@@ -25,6 +26,7 @@ export function useDashboardStats({
   dateFrom,
   dateTo,
   selectedAccount,
+  utcOffset,
   retryCount = 0,
 }: UseDashboardStatsOptions): UseDashboardStatsReturn {
   const [activePlatform, setActivePlatform] = useState<Platform>('waymb');
@@ -48,6 +50,7 @@ export function useDashboardStats({
           dateFrom || undefined,
           dateTo || undefined,
           selectedAccount ? Number(selectedAccount) : undefined,
+          utcOffset,
         )
         .then((data) => { if (!cancelled) setStats(data); })
         .catch((e) => { if (!cancelled) setError(e.message); })
@@ -60,6 +63,7 @@ export function useDashboardStats({
           dateFrom || undefined,
           dateTo || undefined,
           selectedAccount || undefined,
+          utcOffset,
         )
         .then((data) => { if (!cancelled) setCpStats(data); })
         .catch((e) => { if (!cancelled) setError(e.message); })
@@ -67,7 +71,7 @@ export function useDashboardStats({
     }
 
     return () => { cancelled = true; };
-  }, [activePlatform, period, dateFrom, dateTo, selectedAccount, retryCount]);
+  }, [activePlatform, period, dateFrom, dateTo, selectedAccount, utcOffset, retryCount]);
 
   return { activePlatform, setActivePlatform, stats, cpStats, loading, error };
 }

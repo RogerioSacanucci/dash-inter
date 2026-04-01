@@ -30,11 +30,11 @@ export default function CartpandaShops() {
   const fetchData = useCallback(() => {
     setLoading(true);
     setError(null);
-    api.adminCartpandaShops(period, dateFrom || undefined, dateTo || undefined)
+    api.adminCartpandaShops(period, dateFrom || undefined, dateTo || undefined, utcOffset)
       .then(setData)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [period, dateFrom, dateTo]);
+  }, [period, dateFrom, dateTo, utcOffset]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
