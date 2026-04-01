@@ -54,12 +54,13 @@ export default function CartpandaOrders() {
     if (dateTo) params.date_to = dateTo;
     if (orderId.trim()) params.order_id = orderId.trim();
     if (isAdmin && selectedAccount) params.user_id = selectedAccount;
+    params.utc_offset = String(utcOffset);
 
     api.cartpandaOrders(params)
       .then(setData)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [status, dateFrom, dateTo, orderId, page, isAdmin, selectedAccount]);
+  }, [status, dateFrom, dateTo, orderId, page, isAdmin, selectedAccount, utcOffset]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 

@@ -26,7 +26,7 @@ export default function Dashboard() {
   const showToggle = hasWayMb && hasCartpanda;
 
   const { activePlatform, setActivePlatform, stats, cpStats, loading, error } =
-    useDashboardStats({ period, dateFrom, dateTo, selectedAccount, retryCount });
+    useDashboardStats({ period, dateFrom, dateTo, selectedAccount, utcOffset, retryCount });
 
   useEffect(() => {
     if (!hasWayMb && hasCartpanda) {

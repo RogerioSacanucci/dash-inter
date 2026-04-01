@@ -55,11 +55,11 @@ export default function CartpandaShopDetail() {
     if (!id) return;
     setLoading(true);
     setError(null);
-    api.adminCartpandaShopDetail(Number(id), period, dateFrom || undefined, dateTo || undefined)
+    api.adminCartpandaShopDetail(Number(id), period, dateFrom || undefined, dateTo || undefined, utcOffset)
       .then(setData)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [id, period, dateFrom, dateTo]);
+  }, [id, period, dateFrom, dateTo, utcOffset]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
