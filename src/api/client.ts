@@ -59,17 +59,28 @@ export interface Balance {
   currency: string;
 }
 
+export interface ShopBalance {
+  shop_id: number;
+  shop_name: string;
+  gross_volume: number;
+  balance_pending: number;
+  balance_released: number;
+  balance_reserve: number;
+}
+
 export interface PayoutLog {
   id: number;
   amount: string;
   type: 'withdrawal' | 'adjustment';
   note: string | null;
+  shop_name: string | null;
   admin_email: string;
   created_at: string;
 }
 
 export interface UserBalanceResponse {
   balance: Balance;
+  shop_balances: ShopBalance[];
   payout_logs: {
     data: PayoutLog[];
     meta: { total: number; page: number; per_page: number; pages: number };
@@ -80,6 +91,7 @@ export interface PayoutPayload {
   amount: number;
   type: 'withdrawal' | 'adjustment';
   note?: string;
+  shop_id?: number;
 }
 
 export interface AdminUsersResponse {
