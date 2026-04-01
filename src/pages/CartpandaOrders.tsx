@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { api, CartpandaOrdersResponse, AdminUser } from '../api/client';
 import { useAuth } from '../hooks/useAuth';
 import CartpandaOrderTable from '../components/CartpandaOrderTable';
-import { periodToDates } from '../utils/dates';
+import DateRangeFilter from '../components/DateRangeFilter';
+import { getStoredUtcOffset } from '../utils/dates';
 
 const STATUSES = ['', 'PENDING', 'COMPLETED', 'FAILED', 'DECLINED', 'REFUNDED'];
 const STATUS_LABELS: Record<string, string> = {
@@ -13,13 +14,6 @@ const STATUS_LABELS: Record<string, string> = {
   DECLINED:  'Recusado',
   REFUNDED:  'Reembolsado',
 };
-
-const QUICK_PERIODS = [
-  { label: 'Hoje',    value: 'today'     },
-  { label: 'Ontem',   value: 'yesterday' },
-  { label: '7 dias',  value: '7d'        },
-  { label: '30 dias', value: '30d'       },
-];
 
 export default function CartpandaOrders() {
   const { user } = useAuth();
@@ -35,7 +29,7 @@ export default function CartpandaOrders() {
   const [orderId, setOrderId] = useState('');
   const [page, setPage] = useState(1);
   const [period, setPeriod] = useState('');
-  const [showCustom, setShowCustom] = useState(false);
+  const [utcOffset, setUtcOffset] = useState(getStoredUtcOffset);
 
   const [accounts, setAccounts]         = useState<AdminUser[]>([]);
   const [selectedAccount, setSelectedAccount] = useState('');
@@ -74,22 +68,6 @@ export default function CartpandaOrders() {
     setPage(1);
   }
 
-  function selectPeriod(value: string) {
-    setPeriod(value);
-    setShowCustom(false);
-    const { from, to } = periodToDates(value);
-    setDateFrom(from);
-    setDateTo(to);
-    setPage(1);
-  }
-
-  function handleCustom() {
-    setPeriod('custom');
-    setShowCustom(true);
-    setDateFrom('');
-    setDateTo('');
-  }
-
   function clearFilters() {
     setStatus('');
     setDateFrom('');
@@ -97,7 +75,6 @@ export default function CartpandaOrders() {
     setOrderId('');
     setSelectedAccount('');
     setPeriod('');
-    setShowCustom(false);
     setPage(1);
   }
 
@@ -153,53 +130,23 @@ export default function CartpandaOrders() {
             ))}
           </select>
 
-          <div className="flex bg-surface-1 border border-white/[0.06] rounded-lg p-1 gap-0.5">
-            {QUICK_PERIODS.map((p) => (
-              <button
-                key={p.value}
-                type="button"
-                onClick={() => selectPeriod(p.value)}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0 ${
-                  period === p.value && !showCustom
-                    ? 'bg-surface-2 text-white shadow-sm'
-                    : 'text-white/40 hover:text-white/70'
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={handleCustom}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0 ${
-                showCustom
-                  ? 'bg-surface-2 text-white shadow-sm'
-                  : 'text-white/40 hover:text-white/70'
-              }`}
-            >
-              Personalizado
-            </button>
-          </div>
-
-          {showCustom && (
-            <>
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                aria-label="Data inicial"
-                className={inputCls}
-              />
-              <span className="text-white/30 text-sm">até</span>
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                aria-label="Data final"
-                className={inputCls}
-              />
-            </>
-          )}
+          <DateRangeFilter
+            period={period}
+            dateFrom={dateFrom}
+            dateTo={dateTo}
+            utcOffset={utcOffset}
+            onPeriodChange={(p, from, to) => {
+              setPeriod(p);
+              setDateFrom(from);
+              setDateTo(to);
+              setPage(1);
+            }}
+            onCustomDatesChange={(from, to) => {
+              setDateFrom(from);
+              setDateTo(to);
+            }}
+            onUtcOffsetChange={setUtcOffset}
+          />
 
           {(status || period || orderId || selectedAccount) && (
             <button

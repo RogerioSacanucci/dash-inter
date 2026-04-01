@@ -1,15 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api, AdminCartpandaShopDetailResponse } from '../../api/client';
-import { periodToDates } from '../../utils/dates';
+import DateRangeFilter from '../../components/DateRangeFilter';
+import { getStoredUtcOffset } from '../../utils/dates';
 import Chart from '../../components/Chart';
-
-const QUICK_PERIODS = [
-  { label: 'Hoje',    value: 'today'     },
-  { label: 'Ontem',   value: 'yesterday' },
-  { label: '7 dias',  value: '7d'        },
-  { label: '30 dias', value: '30d'       },
-];
 
 interface Metric {
   label: string;
@@ -49,7 +43,7 @@ export default function CartpandaShopDetail() {
   const [period, setPeriod] = useState('30d');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-  const [showCustom, setShowCustom] = useState(false);
+  const [utcOffset, setUtcOffset] = useState(getStoredUtcOffset);
 
   useEffect(() => {
     if (data?.shop.name) {
@@ -68,23 +62,6 @@ export default function CartpandaShopDetail() {
   }, [id, period, dateFrom, dateTo]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-
-  function selectPeriod(value: string) {
-    setPeriod(value);
-    setShowCustom(false);
-    const { from, to } = periodToDates(value);
-    setDateFrom(from);
-    setDateTo(to);
-  }
-
-  function handleCustom() {
-    setPeriod('custom');
-    setShowCustom(true);
-    setDateFrom('');
-    setDateTo('');
-  }
-
-  const inputCls = "bg-surface-1 border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition-colors";
 
   const metrics: Metric[] = data ? [
     { label: 'Volume', value: formatVolume(data.aggregate.total_volume), valueColor: 'text-brand' },
@@ -117,53 +94,22 @@ export default function CartpandaShopDetail() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex bg-surface-1 border border-white/[0.06] rounded-lg p-1 gap-0.5">
-            {QUICK_PERIODS.map((p) => (
-              <button
-                key={p.value}
-                type="button"
-                onClick={() => selectPeriod(p.value)}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0 ${
-                  period === p.value && !showCustom
-                    ? 'bg-surface-2 text-white shadow-sm'
-                    : 'text-white/40 hover:text-white/70'
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={handleCustom}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0 ${
-                showCustom
-                  ? 'bg-surface-2 text-white shadow-sm'
-                  : 'text-white/40 hover:text-white/70'
-              }`}
-            >
-              Personalizado
-            </button>
-          </div>
-
-          {showCustom && (
-            <>
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                aria-label="Data inicial"
-                className={inputCls}
-              />
-              <span className="text-white/30 text-sm">até</span>
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                aria-label="Data final"
-                className={inputCls}
-              />
-            </>
-          )}
+          <DateRangeFilter
+            period={period}
+            dateFrom={dateFrom}
+            dateTo={dateTo}
+            utcOffset={utcOffset}
+            onPeriodChange={(p, from, to) => {
+              setPeriod(p);
+              setDateFrom(from);
+              setDateTo(to);
+            }}
+            onCustomDatesChange={(from, to) => {
+              setDateFrom(from);
+              setDateTo(to);
+            }}
+            onUtcOffsetChange={setUtcOffset}
+          />
         </div>
       </div>
 
