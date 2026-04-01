@@ -1,16 +1,23 @@
 import { useState } from 'react';
-import { api, Balance, PayoutPayload } from '../api/client';
+import { api, Balance, PayoutPayload, ShopBalance } from '../api/client';
 
 interface Props {
   userId: number;
+  shopBalances: ShopBalance[];
   onClose: () => void;
   onSuccess: (balance: Balance) => void;
 }
 
-export default function PayoutModal({ userId, onClose, onSuccess }: Props) {
+function fmtBalance(value: number): string {
+  const abs = Math.abs(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return (value < 0 ? '-$\u00a0' : '$\u00a0') + abs;
+}
+
+export default function PayoutModal({ userId, shopBalances, onClose, onSuccess }: Props) {
   const [amount, setAmount] = useState('');
   const [type, setType] = useState<'withdrawal' | 'adjustment'>('withdrawal');
   const [note, setNote] = useState('');
+  const [shopId, setShopId] = useState<number | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,6 +30,7 @@ export default function PayoutModal({ userId, onClose, onSuccess }: Props) {
       amount: parseFloat(amount),
       type,
       note: note.trim() || undefined,
+      shop_id: shopId,
     };
 
     try {
@@ -59,6 +67,35 @@ export default function PayoutModal({ userId, onClose, onSuccess }: Props) {
             </div>
           )}
 
+          {shopBalances.length > 0 && (
+            <div className="overflow-x-auto rounded-xl border border-white/[0.08]">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/[0.06]">
+                    {['Loja', 'A Liberar', 'Liberado', 'Reserva'].map((h) => (
+                      <th
+                        key={h}
+                        className="text-left py-2.5 px-3 text-xs font-semibold text-white/30 uppercase tracking-widest"
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.04]">
+                  {shopBalances.map((s) => (
+                    <tr key={s.shop_id}>
+                      <td className="py-2.5 px-3 text-white/70">{s.shop_name}</td>
+                      <td className="py-2.5 px-3 text-white/50 tabular-nums">{fmtBalance(s.balance_pending)}</td>
+                      <td className="py-2.5 px-3 text-white/50 tabular-nums">{fmtBalance(s.balance_released)}</td>
+                      <td className="py-2.5 px-3 text-white/50 tabular-nums">{fmtBalance(s.balance_reserve)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
           <div>
             <label className={labelCls}>Valor (USD)</label>
             <input
@@ -85,6 +122,23 @@ export default function PayoutModal({ userId, onClose, onSuccess }: Props) {
             </select>
           </div>
 
+          {shopBalances.length > 0 && (
+            <div>
+              <label className={labelCls}>Loja</label>
+              <select
+                value={shopId ?? ''}
+                onChange={(e) => setShopId(e.target.value ? Number(e.target.value) : undefined)}
+                className={inputCls}
+                required={type === 'withdrawal'}
+              >
+                <option value="">Selecionar loja...</option>
+                {shopBalances.map((s) => (
+                  <option key={s.shop_id} value={s.shop_id}>{s.shop_name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div>
             <label className={labelCls}>Nota (opcional)</label>
             <input
@@ -107,7 +161,7 @@ export default function PayoutModal({ userId, onClose, onSuccess }: Props) {
             </button>
             <button
               type="submit"
-              disabled={loading || !amount}
+              disabled={loading || !amount || (type === 'withdrawal' && shopBalances.length > 0 && !shopId)}
               className="flex-1 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-sm font-semibold transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
               {loading ? 'Processando...' : 'Confirmar'}
