@@ -66,10 +66,10 @@ function NavItem({ to, label, end, icon, onClick }: {
       end={end}
       onClick={onClick}
       className={({ isActive }) =>
-        `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0 ${
+        `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-[color,background-color,transform] duration-[160ms] ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0 ${
           isActive
             ? 'bg-white/[0.06] text-white border-2 border-brand'
-            : 'text-white/40 hover:text-white/70 hover:bg-white/[0.04] border-2 border-transparent'
+            : 'text-white/40 fine-hover:text-white/70 fine-hover:bg-white/[0.04] border-2 border-transparent'
         }`
       }
     >
@@ -101,13 +101,13 @@ export default function Layout() {
     <div className="min-h-screen flex bg-canvas">
 
       {/* Mobile backdrop */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-          aria-hidden="true"
-          onClick={closeSidebar}
-        />
-      )}
+      <div
+        className={`fixed inset-0 bg-black/50 z-30 lg:hidden transition-opacity duration-200 ease-out ${
+          sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+        aria-hidden="true"
+        onClick={closeSidebar}
+      />
 
       {/* Sidebar */}
       <aside
@@ -158,7 +158,7 @@ export default function Layout() {
           <button
             onClick={handleLogout}
             aria-label="Terminar sessão"
-            className="w-full text-left text-sm text-white/40 hover:text-white/70 px-3 py-2 rounded-lg hover:bg-white/[0.05] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            className="w-full text-left text-sm text-white/40 fine-hover:text-white/70 px-3 py-2 rounded-lg fine-hover:bg-white/[0.05] transition-[color,background-color,transform] duration-[160ms] ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
           >
             Sair
           </button>
@@ -174,7 +174,7 @@ export default function Layout() {
             onClick={() => setSidebarOpen(true)}
             aria-label="Abrir menu"
             aria-expanded={sidebarOpen}
-            className="p-2 rounded-lg text-white/40 hover:text-white/70 hover:bg-white/[0.05] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand mr-3"
+            className="p-2 rounded-lg text-white/40 fine-hover:text-white/70 fine-hover:bg-white/[0.05] transition-[color,background-color,transform] duration-[160ms] ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand mr-3"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
               <path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>

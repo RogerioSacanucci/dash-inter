@@ -1,3 +1,5 @@
+import plugin from 'tailwindcss/plugin';
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
@@ -23,5 +25,12 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // Use `fine-hover:` instead of `hover:` for hover states that should
+    // only fire on devices with a real pointer (not touch tap-hover).
+    // Example: `fine-hover:bg-white/[0.05]`
+    plugin(function({ addVariant }) {
+      addVariant('fine-hover', '@media (hover: hover) and (pointer: fine) { &:hover }');
+    }),
+  ],
 };

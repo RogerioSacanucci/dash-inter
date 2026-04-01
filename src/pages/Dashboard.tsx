@@ -86,7 +86,7 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={() => setActivePlatform('waymb')}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0 ${
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-[color,background-color,transform] duration-[160ms] ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0 ${
                   activePlatform === 'waymb'
                     ? 'bg-brand text-white shadow-sm'
                     : 'text-white/40 hover:text-white/70'
@@ -97,7 +97,7 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={() => setActivePlatform('cartpanda')}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0 ${
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-[color,background-color,transform] duration-[160ms] ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0 ${
                   activePlatform === 'cartpanda'
                     ? 'bg-white/[0.08] text-white shadow-sm'
                     : 'text-white/40 hover:text-white/70'
@@ -134,7 +134,7 @@ export default function Dashboard() {
           <span>{error}</span>
           <button
             onClick={() => setRetryCount((c) => c + 1)}
-            className="shrink-0 font-semibold underline underline-offset-2 hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded"
+            className="shrink-0 font-semibold underline underline-offset-2 hover:text-red-300 transition-transform duration-[160ms] ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded"
           >
             Tentar novamente
           </button>
@@ -142,9 +142,14 @@ export default function Dashboard() {
       )}
 
       {loading ? (
-        <div className="flex justify-center py-16 text-white/20 text-sm">Carregando...</div>
+        <div className="flex justify-center py-16">
+          <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none" aria-label="Carregando">
+            <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.08)" strokeWidth="2.5" />
+            <path d="M12 2a10 10 0 0 1 10 10" stroke="rgba(255,255,255,0.35)" strokeWidth="2.5" strokeLinecap="round" />
+          </svg>
+        </div>
       ) : activePlatform === 'waymb' && stats ? (
-        <>
+        <div key="waymb" className="flex flex-col gap-6 animate-fade-in">
           <StatsCards overview={stats.overview} />
 
           {/* Conversion card */}
@@ -235,9 +240,9 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
-        </>
+        </div>
       ) : activePlatform === 'cartpanda' && cpStats ? (
-        <>
+        <div key="cartpanda" className="flex flex-col gap-6 animate-fade-in">
           {/* Balance badge */}
           <div className="flex items-center justify-end">
             <div className="bg-surface-1 border border-white/[0.06] rounded-lg px-3 py-1.5 text-sm">
@@ -265,7 +270,7 @@ export default function Dashboard() {
               </span>
             </div>
 
-            <p className="text-4xl font-bold text-white tabular-nums mb-6">
+            <p key={chartMetric} className="text-4xl font-bold text-white tabular-nums mb-6 animate-value-pop">
               {chartMetric === 'orders'
                 ? cpStats.overview.total_orders
                 : `$ ${(chartMetric === 'net_volume' ? cpStats.overview.net_volume : cpStats.overview.total_volume)
@@ -296,7 +301,7 @@ export default function Dashboard() {
               <p className="text-3xl font-bold text-white tabular-nums">{cpStats.overview.completed}</p>
             </div>
           </div>
-        </>
+        </div>
       ) : null}
     </div>
   );

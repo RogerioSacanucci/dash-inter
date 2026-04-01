@@ -104,69 +104,73 @@ export default function DateRangeFilter({
       <button
         type="button"
         onClick={() => setPickerOpen(!pickerOpen)}
-        className="flex items-center gap-2 bg-surface-1 border border-white/[0.06] rounded-lg px-3 py-1.5 text-sm font-medium text-white/70 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+        className="flex items-center gap-2 bg-surface-1 border border-white/[0.06] rounded-lg px-3 py-1.5 text-sm font-medium text-white/70 hover:text-white transition-[color,transform] duration-[160ms] ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
       >
         <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 9v9.75" />
         </svg>
         <span>{periodLabel ?? displayLabel}</span>
         <span className="text-white/30 text-xs">{formatUtcLabel(utcOffset)}</span>
-        <svg className={`w-3.5 h-3.5 text-white/30 transition-transform ${pickerOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg className={`w-3.5 h-3.5 text-white/30 transition-transform duration-[160ms] ease-out ${pickerOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
         </svg>
       </button>
 
-      {/* Popover */}
-      {pickerOpen && (
-        <div className="absolute top-full right-0 mt-2 z-50 bg-surface-1 border border-white/[0.06] rounded-xl shadow-2xl overflow-hidden w-[340px]">
-          {/* Quick periods + UTC row */}
-          <div className="flex items-center justify-between gap-2 px-3 pt-3 pb-2">
-            <div className="flex gap-1">
-              {QUICK_PERIODS.map((p) => (
-                <button
-                  key={p.value}
-                  type="button"
-                  onClick={() => handleQuickPeriod(p.value)}
-                  className={`px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
-                    period === p.value
-                      ? 'bg-brand text-white'
-                      : 'text-white/40 hover:text-white/70 hover:bg-white/[0.04]'
-                  }`}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
-            <select
-              value={utcOffset}
-              onChange={handleUtcChange}
-              aria-label="Fuso horário UTC"
-              className="bg-surface-2 border border-white/[0.06] rounded-md px-2 py-1 text-xs text-white/60 outline-none focus:border-brand/50 transition-colors shrink-0"
-            >
-              {UTC_OFFSETS.map((o) => (
-                <option key={o} value={o}>
-                  {formatUtcLabel(o)}
-                </option>
-              ))}
-            </select>
+      {/* Popover — always mounted, CSS transition handles enter + exit */}
+      <div
+        className={`absolute top-full right-0 mt-2 z-50 bg-surface-1 border border-white/[0.06] rounded-xl shadow-2xl overflow-hidden w-[340px] transition-[opacity,transform] origin-top-right ${
+          pickerOpen
+            ? 'opacity-100 scale-100 pointer-events-auto duration-150 ease-out'
+            : 'opacity-0 scale-95 pointer-events-none duration-100 ease-in'
+        }`}
+      >
+        {/* Quick periods + UTC row */}
+        <div className="flex items-center justify-between gap-2 px-3 pt-3 pb-2">
+          <div className="flex gap-1">
+            {QUICK_PERIODS.map((p) => (
+              <button
+                key={p.value}
+                type="button"
+                onClick={() => handleQuickPeriod(p.value)}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-[color,background-color,transform] duration-[160ms] ease-out active:scale-[0.97] ${
+                  period === p.value
+                    ? 'bg-brand text-white'
+                    : 'text-white/40 hover:text-white/70 hover:bg-white/[0.04]'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
           </div>
-
-          {/* Divider */}
-          <div className="border-t border-white/[0.06]" />
-
-          {/* Calendar */}
-          <div className="date-range-popover">
-            <DatePicker
-              selectsRange
-              startDate={startDate}
-              endDate={endDate}
-              onChange={handleDatePickerChange}
-              inline
-              locale="pt-BR"
-            />
-          </div>
+          <select
+            value={utcOffset}
+            onChange={handleUtcChange}
+            aria-label="Fuso horário UTC"
+            className="bg-surface-2 border border-white/[0.06] rounded-md px-2 py-1 text-xs text-white/60 outline-none focus:border-brand/50 transition-colors shrink-0"
+          >
+            {UTC_OFFSETS.map((o) => (
+              <option key={o} value={o}>
+                {formatUtcLabel(o)}
+              </option>
+            ))}
+          </select>
         </div>
-      )}
+
+        {/* Divider */}
+        <div className="border-t border-white/[0.06]" />
+
+        {/* Calendar */}
+        <div className="date-range-popover">
+          <DatePicker
+            selectsRange
+            startDate={startDate}
+            endDate={endDate}
+            onChange={handleDatePickerChange}
+            inline
+            locale="pt-BR"
+          />
+        </div>
+      </div>
     </div>
   );
 }

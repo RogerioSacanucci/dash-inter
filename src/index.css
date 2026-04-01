@@ -117,3 +117,40 @@ body {
 .date-range-popover .react-datepicker-wrapper {
   display: contents;
 }
+
+/* Popover enter animation */
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-scale-in {
+  animation: scale-in 150ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  transform-origin: top right;
+}
+
+/* Content fade-in after data load */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 250ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+/* Metric value transition (remount via key) */
+@keyframes value-pop {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-value-pop {
+  animation: value-pop 180ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
