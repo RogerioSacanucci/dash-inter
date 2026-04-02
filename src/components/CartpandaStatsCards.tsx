@@ -34,7 +34,7 @@ export default function CartpandaStatsCards({ overview }: Props) {
       heading: 'Receita',
       metrics: [
         { label: 'Vol. Bruto',   value: fmt(overview.total_volume),  valueColor: 'text-brand', primary: true },
-        { label: 'Vol. Líquido', value: fmt(overview.net_volume),    sub: '-8.5% taxa · -5% reserva' },
+        { label: 'Vol. Líquido', value: fmt(overview.net_volume),    sub: '-5% reserva' },
       ],
     },
     {
