@@ -5,7 +5,7 @@ import DateRangeFilter from '../../components/DateRangeFilter';
 import { getStoredUtcOffset } from '../../utils/dates';
 
 function formatVolume(value: number): string {
-  return value.toLocaleString('pt-BR', {
+  return value.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
