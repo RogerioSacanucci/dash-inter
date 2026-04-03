@@ -31,10 +31,7 @@ export default function ShopBalancesCard({ shopBalances }: Props) {
     <div className="bg-surface-1 rounded-2xl border border-white/[0.06] animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between px-6 pt-5 pb-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-2 h-2 rounded-full bg-brand" />
-          <span className="text-[15px] font-semibold text-white">Saldo por Conta</span>
-        </div>
+        <span className="text-[15px] font-semibold text-white">Saldo por Conta</span>
         <select
           value={selected}
           onChange={(e) => setSelected(e.target.value)}
@@ -43,7 +40,7 @@ export default function ShopBalancesCard({ shopBalances }: Props) {
           <option value="all">Todas as contas</option>
           {shopBalances.map((s) => (
             <option key={s.account_index} value={s.account_index}>
-              Conta {s.account_index + 1}
+              Conta {s.account_index}
             </option>
           ))}
         </select>
@@ -65,13 +62,7 @@ export default function ShopBalancesCard({ shopBalances }: Props) {
             {filtered.map((s) => (
               <tr key={s.account_index} className="border-b border-white/[0.03] fine-hover:bg-white/[0.02] transition-colors">
                 <td className="py-3 text-white font-medium">
-                  <span className="inline-flex items-center gap-2">
-                    <span
-                      className="w-1.5 h-1.5 rounded-full shrink-0"
-                      style={{ background: ACCOUNT_COLORS[s.account_index % ACCOUNT_COLORS.length] }}
-                    />
-                    Conta {s.account_index + 1}
-                  </span>
+                  Conta {s.account_index}
                 </td>
                 <td className="py-3 text-right text-white/85 tabular-nums">{fmtBalance(s.balance_pending)}</td>
                 <td className="py-3 text-right text-brand tabular-nums">{fmtBalance(s.balance_released)}</td>

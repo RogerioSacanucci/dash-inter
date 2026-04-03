@@ -264,8 +264,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <ShopBalancesCard shopBalances={shopBalances} />
-
           {/* Main chart card */}
           <div className="bg-surface-1 rounded-2xl border border-white/[0.06] p-6">
             <div className="flex items-center justify-between mb-4">
@@ -314,6 +312,8 @@ export default function Dashboard() {
               <p className="text-3xl font-bold text-white tabular-nums">{cpStats.overview.completed}</p>
             </div>
           </div>
+
+          <ShopBalancesCard shopBalances={shopBalances} />
         </div>
       ) : null}
     </div>
