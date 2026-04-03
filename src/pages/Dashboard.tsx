@@ -47,11 +47,12 @@ export default function Dashboard() {
   }, [isAdmin]);
 
   useEffect(() => {
-    if (!isAdmin) {
-      api.getOwnShopBalances()
-        .then(({ shop_balances }) => setShopBalances(shop_balances))
-        .catch(() => {});
-    }
+    if (isAdmin) return;
+    let cancelled = false;
+    api.getOwnShopBalances()
+      .then(({ shop_balances }) => { if (!cancelled) setShopBalances(shop_balances); })
+      .catch(() => { /* shop balances are optional — card simply won't render */ });
+    return () => { cancelled = true; };
   }, [isAdmin]);
 
   const ov = stats?.overview;
