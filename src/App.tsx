@@ -9,6 +9,7 @@ import Links from './pages/Links';
 import LinkEditor from './pages/LinkEditor';
 import CartpandaShops from './pages/admin/CartpandaShops';
 import CartpandaShopDetail from './pages/admin/CartpandaShopDetail';
+import WebhookLogs from './pages/admin/WebhookLogs';
 import Layout from './components/Layout';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -38,6 +39,7 @@ export default function App() {
           <Route path="links" element={<Links />} />
           <Route path="admin/internacional-shops" element={<CartpandaShops />} />
           <Route path="admin/internacional-shops/:id" element={<CartpandaShopDetail />} />
+          <Route path="admin/webhook-logs" element={<WebhookLogs />} />
         </Route>
         <Route
           path="/links/:id/edit"

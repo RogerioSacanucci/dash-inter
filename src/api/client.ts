@@ -106,6 +106,23 @@ export interface PayoutPayload {
   shop_id?: number;
 }
 
+export interface WebhookLog {
+  id: number;
+  event: string | null;
+  cartpanda_order_id: string | null;
+  shop_slug: string | null;
+  status: 'processed' | 'ignored' | 'failed';
+  status_reason: string | null;
+  payload: Record<string, unknown>;
+  ip_address: string | null;
+  created_at: string;
+}
+
+export interface WebhookLogsResponse {
+  data: WebhookLog[];
+  meta: { total: number; page: number; per_page: number; pages: number };
+}
+
 export interface AdminUsersResponse {
   data: AdminUser[];
   meta: { total: number; page: number; per_page: number; pages: number };
@@ -475,4 +492,16 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+
+  // Admin — Webhook logs
+  adminWebhookLogs: (params: { event?: string; status?: string; shop_slug?: string; date_from?: string; date_to?: string; page?: number } = {}) => {
+    const q = new URLSearchParams();
+    if (params.event) q.set('event', params.event);
+    if (params.status) q.set('status', params.status);
+    if (params.shop_slug) q.set('shop_slug', params.shop_slug);
+    if (params.date_from) q.set('date_from', params.date_from);
+    if (params.date_to) q.set('date_to', params.date_to);
+    if (params.page) q.set('page', String(params.page));
+    return request<WebhookLogsResponse>(`/api/admin/webhook-logs?${q}`);
+  },
 };
