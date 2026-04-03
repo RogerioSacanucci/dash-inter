@@ -52,6 +52,7 @@ export default function ShopBalancesCard({ shopBalances }: Props) {
       {/* Table */}
       <div className="px-6 overflow-x-auto">
         <table className="w-full text-sm">
+          <caption className="sr-only">Saldo por conta</caption>
           <thead>
             <tr className="border-b border-white/[0.06]">
               <th className="text-left pb-2.5 text-[11px] font-semibold text-white/35 uppercase tracking-widest">Conta</th>
@@ -62,7 +63,7 @@ export default function ShopBalancesCard({ shopBalances }: Props) {
           </thead>
           <tbody>
             {filtered.map((s) => (
-              <tr key={s.account_index} className="border-b border-white/[0.03] fine-hover:hover:bg-white/[0.02] transition-colors">
+              <tr key={s.account_index} className="border-b border-white/[0.03] fine-hover:bg-white/[0.02] transition-colors">
                 <td className="py-3 text-white font-medium">
                   <span className="inline-flex items-center gap-2">
                     <span
