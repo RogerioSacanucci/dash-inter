@@ -19,6 +19,13 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function AdminGuard({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (user?.role !== 'admin') return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -37,9 +44,9 @@ export default function App() {
           <Route path="internacional-orders" element={<CartpandaOrders />} />
           <Route path="settings" element={<Settings />} />
           <Route path="links" element={<Links />} />
-          <Route path="admin/internacional-shops" element={<CartpandaShops />} />
-          <Route path="admin/internacional-shops/:id" element={<CartpandaShopDetail />} />
-          <Route path="admin/webhook-logs" element={<WebhookLogs />} />
+          <Route path="admin/internacional-shops" element={<AdminGuard><CartpandaShops /></AdminGuard>} />
+          <Route path="admin/internacional-shops/:id" element={<AdminGuard><CartpandaShopDetail /></AdminGuard>} />
+          <Route path="admin/webhook-logs" element={<AdminGuard><WebhookLogs /></AdminGuard>} />
         </Route>
         <Route
           path="/links/:id/edit"
