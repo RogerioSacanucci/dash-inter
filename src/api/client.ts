@@ -68,6 +68,18 @@ export interface ShopBalance {
   balance_reserve: number;
 }
 
+export interface UserShopBalance {
+  account_index: number;
+  shop_id: number;
+  balance_pending: number;
+  balance_released: number;
+  balance_reserve: number;
+}
+
+export interface UserShopBalancesResponse {
+  shop_balances: UserShopBalance[];
+}
+
 export interface PayoutLog {
   id: number;
   amount: string;
@@ -451,6 +463,9 @@ export const api = {
   // Balance
   getOwnBalance: () =>
     request<Balance>('/api/balance'),
+
+  getOwnShopBalances: () =>
+    request<UserShopBalancesResponse>('/api/balance/shops'),
 
   adminGetUserBalance: (userId: number, page = 1) =>
     request<UserBalanceResponse>(`/api/admin/users/${userId}/balance?page=${page}`),
