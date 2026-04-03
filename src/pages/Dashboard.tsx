@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { api, AdminUser } from '../api/client';
+import { api, AdminUser, UserShopBalance } from '../api/client';
 import DateRangeFilter from '../components/DateRangeFilter';
 import { getStoredUtcOffset } from '../utils/dates';
 import { useAuth } from '../hooks/useAuth';
 import { useDashboardStats } from '../hooks/useDashboardStats';
 import StatsCards from '../components/StatsCards';
 import Chart from '../components/Chart';
+import ShopBalancesCard from '../components/ShopBalancesCard';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -20,6 +21,7 @@ export default function Dashboard() {
 
   const [accounts, setAccounts]             = useState<AdminUser[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string>('');
+  const [shopBalances, setShopBalances] = useState<UserShopBalance[]>([]);
 
   const hasWayMb = isAdmin || !!user?.payer_email;
   const hasCartpanda = isAdmin || !!user?.cartpanda_param;
@@ -42,6 +44,15 @@ export default function Dashboard() {
     if (isAdmin) {
       api.users().then(({ users }) => setAccounts(users)).catch(() => {});
     }
+  }, [isAdmin]);
+
+  useEffect(() => {
+    if (isAdmin) return;
+    let cancelled = false;
+    api.getOwnShopBalances()
+      .then(({ shop_balances }) => { if (!cancelled) setShopBalances(shop_balances); })
+      .catch(() => { /* shop balances are optional — card simply won't render */ });
+    return () => { cancelled = true; };
   }, [isAdmin]);
 
   const ov = stats?.overview;
@@ -252,6 +263,8 @@ export default function Dashboard() {
               </span>
             </div>
           </div>
+
+          <ShopBalancesCard shopBalances={shopBalances} />
 
           {/* Main chart card */}
           <div className="bg-surface-1 rounded-2xl border border-white/[0.06] p-6">
