@@ -1,5 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
-import { api, Balance, UserBalanceResponse } from '../api/client';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { api, Balance } from '../api/client';
+import { FetchingIndicator } from './ui/FetchingIndicator';
+import { SkeletonTableRows } from './ui/Skeleton';
 import PayoutModal from './PayoutModal';
 
 interface Props {
@@ -13,27 +16,18 @@ function formatBalance(value: string): string {
 }
 
 export default function UserBalancePanel({ userId }: Props) {
-  const [data, setData] = useState<UserBalanceResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
 
-  const fetchBalance = useCallback((p = 1) => {
-    setLoading(true);
-    setError(null);
-    api.adminGetUserBalance(userId, p)
-      .then(setData)
-      .catch((e) => setError(e instanceof Error ? e.message : 'Erro ao carregar saldo.'))
-      .finally(() => setLoading(false));
-  }, [userId]);
+  const { data, isLoading, isFetching, error } = useQuery({
+    queryKey: ['user-balance', userId, page],
+    queryFn: () => api.adminGetUserBalance(userId, page),
+  });
 
-  useEffect(() => { fetchBalance(page); }, [fetchBalance, page]);
-
-  function handlePayoutSuccess(balance: Balance) {
+  function handlePayoutSuccess(_balance: Balance) {
     setShowModal(false);
-    setData((prev) => prev ? { ...prev, balance } : null);
-    fetchBalance(1);
+    queryClient.invalidateQueries({ queryKey: ['user-balance', userId] });
   }
 
   const releasedIsNegative = data && parseFloat(data.balance.balance_released) < 0;
@@ -42,6 +36,7 @@ export default function UserBalancePanel({ userId }: Props) {
     <div className="flex flex-col gap-4">
       {/* Balance cards */}
       <div className="bg-surface-1 rounded-2xl px-6 py-5">
+        <FetchingIndicator isFetching={isFetching && !isLoading} />
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex divide-x divide-white/[0.06] gap-0">
             <div className="pr-8 flex flex-col gap-1.5">
@@ -49,7 +44,7 @@ export default function UserBalancePanel({ userId }: Props) {
                 Saldo a Liberar
               </p>
               <p className="text-2xl font-bold tracking-tight tabular-nums leading-none text-white">
-                {loading ? '—' : formatBalance(data?.balance.balance_pending ?? '0')}
+                {isLoading ? '—' : formatBalance(data?.balance.balance_pending ?? '0')}
               </p>
             </div>
             <div className="pl-8 pr-8 flex flex-col gap-1.5">
@@ -57,7 +52,7 @@ export default function UserBalancePanel({ userId }: Props) {
                 Reserva
               </p>
               <p className="text-2xl font-bold tracking-tight tabular-nums leading-none text-white">
-                {loading ? '—' : formatBalance(data?.balance.balance_reserve ?? '0')}
+                {isLoading ? '—' : formatBalance(data?.balance.balance_reserve ?? '0')}
               </p>
             </div>
             <div className="pl-8 flex flex-col gap-1.5">
@@ -65,7 +60,7 @@ export default function UserBalancePanel({ userId }: Props) {
                 Saldo Liberado
               </p>
               <p className={`text-2xl font-bold tracking-tight tabular-nums leading-none ${releasedIsNegative ? 'text-red-400' : 'text-white'}`}>
-                {loading ? '—' : formatBalance(data?.balance.balance_released ?? '0')}
+                {isLoading ? '—' : formatBalance(data?.balance.balance_released ?? '0')}
               </p>
             </div>
           </div>
@@ -82,7 +77,7 @@ export default function UserBalancePanel({ userId }: Props) {
       {/* Error */}
       {error && (
         <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-sm text-red-400">
-          {error}
+          {error instanceof Error ? error.message : 'Erro ao carregar saldo.'}
         </div>
       )}
 
@@ -106,12 +101,8 @@ export default function UserBalancePanel({ userId }: Props) {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.04]">
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="py-10 text-center text-white/20 text-sm">
-                    Carregando...
-                  </td>
-                </tr>
+              {isLoading ? (
+                <SkeletonTableRows rows={5} cols={[55, 40, 45, 50, 60, 40]} />
               ) : !data?.payout_logs.data.length ? (
                 <tr>
                   <td colSpan={6} className="py-10 text-center text-white/20 text-sm">
