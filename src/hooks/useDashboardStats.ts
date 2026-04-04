@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { api, StatsResponse, CartpandaStatsResponse } from '../api/client';
 
 export type Platform = 'waymb' | 'cartpanda';
@@ -9,16 +10,17 @@ interface UseDashboardStatsOptions {
   dateTo: string;
   selectedAccount: string;
   utcOffset: number;
-  retryCount?: number;
 }
 
 interface UseDashboardStatsReturn {
   activePlatform: Platform;
   setActivePlatform: (p: Platform) => void;
-  stats: StatsResponse | null;
-  cpStats: CartpandaStatsResponse | null;
+  stats: StatsResponse | undefined;
+  cpStats: CartpandaStatsResponse | undefined;
   loading: boolean;
+  isFetching: boolean;
   error: string | null;
+  refetch: () => void;
 }
 
 export function useDashboardStats({
@@ -27,51 +29,48 @@ export function useDashboardStats({
   dateTo,
   selectedAccount,
   utcOffset,
-  retryCount = 0,
 }: UseDashboardStatsOptions): UseDashboardStatsReturn {
   const [activePlatform, setActivePlatform] = useState<Platform>('waymb');
-  const [stats, setStats] = useState<StatsResponse | null>(null);
-  const [cpStats, setCpStats] = useState<CartpandaStatsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (period === 'custom' && (!dateFrom || !dateTo)) return;
-    let cancelled = false;
+  const isWayMb = activePlatform === 'waymb';
+  const canFetch = !(period === 'custom' && (!dateFrom || !dateTo));
 
-    setLoading(true);
-    setError(null);
+  const statsQuery = useQuery<StatsResponse>({
+    queryKey: ['stats', 'waymb', period, dateFrom, dateTo, selectedAccount, utcOffset],
+    queryFn: () =>
+      api.stats(
+        period,
+        dateFrom || undefined,
+        dateTo || undefined,
+        selectedAccount ? Number(selectedAccount) : undefined,
+        utcOffset,
+      ),
+    enabled: isWayMb && canFetch,
+  });
 
-    if (activePlatform === 'waymb') {
-      setCpStats(null);
-      api
-        .stats(
-          period,
-          dateFrom || undefined,
-          dateTo || undefined,
-          selectedAccount ? Number(selectedAccount) : undefined,
-          utcOffset,
-        )
-        .then((data) => { if (!cancelled) setStats(data); })
-        .catch((e) => { if (!cancelled) setError(e.message); })
-        .finally(() => { if (!cancelled) setLoading(false); });
-    } else {
-      setStats(null);
-      api
-        .cartpandaStats(
-          period,
-          dateFrom || undefined,
-          dateTo || undefined,
-          selectedAccount || undefined,
-          utcOffset,
-        )
-        .then((data) => { if (!cancelled) setCpStats(data); })
-        .catch((e) => { if (!cancelled) setError(e.message); })
-        .finally(() => { if (!cancelled) setLoading(false); });
-    }
+  const cpStatsQuery = useQuery<CartpandaStatsResponse>({
+    queryKey: ['stats', 'cartpanda', period, dateFrom, dateTo, selectedAccount, utcOffset],
+    queryFn: () =>
+      api.cartpandaStats(
+        period,
+        dateFrom || undefined,
+        dateTo || undefined,
+        selectedAccount || undefined,
+        utcOffset,
+      ),
+    enabled: !isWayMb && canFetch,
+  });
 
-    return () => { cancelled = true; };
-  }, [activePlatform, period, dateFrom, dateTo, selectedAccount, utcOffset, retryCount]);
+  const activeQuery = isWayMb ? statsQuery : cpStatsQuery;
 
-  return { activePlatform, setActivePlatform, stats, cpStats, loading, error };
+  return {
+    activePlatform,
+    setActivePlatform,
+    stats: isWayMb ? statsQuery.data : undefined,
+    cpStats: isWayMb ? undefined : cpStatsQuery.data,
+    loading: activeQuery.isLoading,
+    isFetching: activeQuery.isFetching,
+    error: activeQuery.error?.message ?? null,
+    refetch: () => { activeQuery.refetch(); },
+  };
 }
