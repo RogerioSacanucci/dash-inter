@@ -10,13 +10,17 @@ export default {
       },
       colors: {
         brand: {
-          DEFAULT: '#14b8a6',
-          hover:   '#0d9488',
+          DEFAULT: '#E8552A',
+          hover:   '#F06838',
+          text:    '#5E2312',
+          subtle:  'rgba(232,85,42,0.10)',
+          muted:   'rgba(232,85,42,0.50)',
         },
-        canvas:  '#0d0d0e',
+        canvas:  '#050505',
+        'content-bg': '#0C0C0C',
         surface: {
-          1: '#131316',
-          2: '#1c1c20',
+          1: '#161616',
+          2: '#202020',
         },
         method: {
           mbway:       '#6366f1',  // indigo-500

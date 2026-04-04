@@ -28,7 +28,7 @@ export default function ShopBalancesCard({ shopBalances }: Props) {
   };
 
   return (
-    <div className="bg-surface-1 rounded-2xl border border-white/[0.06] animate-fade-in">
+    <div className="bg-surface-1 rounded-2xl animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between px-6 pt-5 pb-4">
         <span className="text-[15px] font-semibold text-white">Saldo por Conta</span>
@@ -65,7 +65,7 @@ export default function ShopBalancesCard({ shopBalances }: Props) {
                   Conta {s.account_index}
                 </td>
                 <td className="py-3 text-right text-white/85 tabular-nums">{fmtBalance(s.balance_pending)}</td>
-                <td className="py-3 text-right text-brand tabular-nums">{fmtBalance(s.balance_released)}</td>
+                <td className="py-3 text-right text-emerald-400 tabular-nums">{fmtBalance(s.balance_released)}</td>
                 <td className="py-3 text-right text-amber-400 tabular-nums">{fmtBalance(s.balance_reserve)}</td>
               </tr>
             ))}
@@ -75,7 +75,7 @@ export default function ShopBalancesCard({ shopBalances }: Props) {
               <tr className="border-t border-white/[0.08]">
                 <td className="py-3 text-white/50 font-semibold text-xs uppercase tracking-wider">Total</td>
                 <td className="py-3 text-right text-white font-bold tabular-nums">{fmtBalance(totals.balance_pending)}</td>
-                <td className="py-3 text-right text-brand font-bold tabular-nums">{fmtBalance(totals.balance_released)}</td>
+                <td className="py-3 text-right text-emerald-400 font-bold tabular-nums">{fmtBalance(totals.balance_released)}</td>
                 <td className="py-3 text-right text-amber-400 font-bold tabular-nums">{fmtBalance(totals.balance_reserve)}</td>
               </tr>
             </tfoot>

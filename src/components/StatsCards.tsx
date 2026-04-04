@@ -50,7 +50,7 @@ export default function StatsCards({ overview }: Props) {
   ];
 
   return (
-    <div className="bg-surface-1 rounded-2xl border border-white/[0.06] px-6 py-5">
+    <div className="bg-surface-1 rounded-2xl px-6 py-5">
       {/* Desktop: single row with dividers */}
       <div className="hidden sm:flex items-start divide-x divide-white/[0.06]">
         {cells.map((c, i) => (

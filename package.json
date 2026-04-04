@@ -9,8 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@lordicon/react": "^1.11.0",
     "@monaco-editor/react": "^4.7.0",
     "@types/react-datepicker": "^6.2.0",
+    "lottie-web": "^5.13.0",
+    "lucide-react": "^1.7.0",
+    "motion": "^12.38.0",
     "react": "^18.3.1",
     "react-datepicker": "^9.1.0",
     "react-dom": "^18.3.1",

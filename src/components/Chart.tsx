@@ -8,7 +8,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-const BRAND  = '#14b8a6';
+const BRAND  = '#E8552A';
 const INDIGO = '#6366f1';
 
 interface DataPoint {
@@ -79,12 +79,12 @@ export default function Chart({ data, hourly = false, secondaryLabel = 'transaç
           <XAxis
             dataKey={xKey}
             tickFormatter={hourly ? (v) => v : formatDate}
-            tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.25)', fontFamily: 'Outfit' }}
+            tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.25)', fontFamily: 'Plus Jakarta Sans' }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
-            tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.25)', fontFamily: 'Outfit' }}
+            tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.25)', fontFamily: 'Plus Jakarta Sans' }}
             axisLine={false}
             tickLine={false}
             tickFormatter={(v) => isCount ? String(v) : `${currencySymbol}${v}`}

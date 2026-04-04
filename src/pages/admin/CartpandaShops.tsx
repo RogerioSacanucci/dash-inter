@@ -119,14 +119,14 @@ export default function CartpandaShops() {
                     <tr
                       key={shop.id}
                       onClick={() => navigate(`/admin/internacional-shops/${shop.id}`)}
-                      className="border-b border-white/[0.06] last:border-0 cursor-pointer hover:bg-white/[0.02] transition-colors"
+                      className="border-b border-white/[0.06] last:border-0 cursor-pointer fine-hover:bg-white/[0.02] transition-colors"
                     >
                       <td className="px-4 py-3 text-white/70 font-medium">{shop.name}</td>
                       <td className="px-4 py-3 text-white/40 hidden md:table-cell">{shop.shop_slug}</td>
                       <td className="px-4 py-3 text-right text-white/70 tabular-nums">{shop.users_count}</td>
                       <td className="px-4 py-3 text-right text-white/70 tabular-nums hidden sm:table-cell">{shop.orders_count}</td>
                       <td className="px-4 py-3 text-right text-emerald-400 tabular-nums hidden sm:table-cell">{shop.completed}</td>
-                      <td className="px-4 py-3 text-right text-brand tabular-nums">
+                      <td className="px-4 py-3 text-right text-emerald-400 tabular-nums">
                         $&nbsp;{formatVolume(shop.total_volume)}
                       </td>
                     </tr>

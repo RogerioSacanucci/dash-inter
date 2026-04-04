@@ -33,7 +33,7 @@ export default function CartpandaStatsCards({ overview }: Props) {
     {
       heading: 'Receita',
       metrics: [
-        { label: 'Vol. Bruto',   value: fmt(overview.total_volume),  valueColor: 'text-brand', primary: true },
+        { label: 'Vol. Bruto',   value: fmt(overview.total_volume),  valueColor: 'text-emerald-400', primary: true },
         { label: 'Vol. Líquido', value: fmt(overview.net_volume),    sub: '-5% reserva' },
       ],
     },
@@ -61,7 +61,7 @@ export default function CartpandaStatsCards({ overview }: Props) {
   ];
 
   return (
-    <div className="bg-surface-1 rounded-2xl border border-white/[0.06] px-6 py-5">
+    <div className="bg-surface-1 rounded-2xl px-6 py-5">
 
       {/* Desktop: 4 groups separated by stronger dividers */}
       <div className="hidden sm:grid grid-cols-4 divide-x divide-white/[0.10]">

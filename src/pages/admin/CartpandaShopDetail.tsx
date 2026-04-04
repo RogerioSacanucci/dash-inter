@@ -11,9 +11,12 @@ interface Metric {
   valueColor?: string;
 }
 
-function MetricCell({ label, value, valueColor = 'text-white' }: Metric) {
+function MetricCell({ label, value, valueColor = 'text-white', index = 0 }: Metric & { index?: number }) {
   return (
-    <div className="flex-1 px-5 first:pl-0 last:pr-0 flex flex-col gap-1.5 min-w-0">
+    <div
+      className="flex-1 px-5 first:pl-0 last:pr-0 flex flex-col gap-1.5 min-w-0 animate-fade-in"
+      style={{ animationDelay: `${index * 40}ms` }}
+    >
       <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest">{label}</p>
       <p className={`text-2xl font-bold tracking-tight tabular-nums leading-none ${valueColor}`}>
         {value}
@@ -64,7 +67,7 @@ export default function CartpandaShopDetail() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const metrics: Metric[] = data ? [
-    { label: 'Volume', value: formatVolume(data.aggregate.total_volume), valueColor: 'text-brand' },
+    { label: 'Volume', value: formatVolume(data.aggregate.total_volume), valueColor: 'text-emerald-400' },
     { label: 'Pedidos', value: data.aggregate.total_orders.toString() },
     { label: 'Concluídos', value: data.aggregate.completed.toString(), valueColor: 'text-emerald-400' },
   ] : [];
@@ -133,13 +136,13 @@ export default function CartpandaShopDetail() {
           {/* Stats cards */}
           <div className="bg-surface-1 rounded-2xl border border-white/[0.06] px-6 py-5">
             <div className="hidden sm:flex items-start divide-x divide-white/[0.06]">
-              {metrics.map((m) => (
-                <MetricCell key={m.label} {...m} />
+              {metrics.map((m, i) => (
+                <MetricCell key={m.label} {...m} index={i} />
               ))}
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:hidden">
-              {metrics.map((m) => (
-                <MetricCell key={m.label} {...m} />
+              {metrics.map((m, i) => (
+                <MetricCell key={m.label} {...m} index={i} />
               ))}
             </div>
           </div>
@@ -196,7 +199,7 @@ export default function CartpandaShopDetail() {
                         <td className="px-4 py-3 text-white/70">{user.email}</td>
                         <td className="px-4 py-3 text-right text-white/70 tabular-nums hidden sm:table-cell">{user.orders_count}</td>
                         <td className="px-4 py-3 text-right text-emerald-400 tabular-nums hidden sm:table-cell">{user.completed}</td>
-                        <td className="px-4 py-3 text-right text-brand tabular-nums">
+                        <td className="px-4 py-3 text-right text-emerald-400 tabular-nums">
                           {formatVolume(user.total_volume)}
                         </td>
                         <td className="px-4 py-3 text-right tabular-nums text-white/50 hidden lg:table-cell">

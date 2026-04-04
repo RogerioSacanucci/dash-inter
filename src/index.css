@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-  background-color: #0d0d0e;
+  background-color: #050505;
   color: #f7f7f8;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -14,20 +14,25 @@ body {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-property: color, background-color, border-color, opacity !important;
+    transition-duration: 150ms !important;
   }
 }
 
 /* react-datepicker dark-theme overrides */
 .react-datepicker {
-  background-color: #131316 !important;
+  background-color: #161616 !important;
   border: none !important;
   border-radius: 0 !important;
   font-family: inherit !important;
   color: rgba(255, 255, 255, 0.7) !important;
 }
 .react-datepicker__header {
-  background-color: #131316 !important;
+  background-color: #161616 !important;
   border-bottom-color: rgba(255, 255, 255, 0.06) !important;
   padding-top: 0.5rem !important;
 }
@@ -49,7 +54,7 @@ body {
   font-size: 0.8125rem !important;
 }
 .react-datepicker__day:hover {
-  background-color: #1c1c20 !important;
+  background-color: #202020 !important;
 }
 .react-datepicker__day--today {
   font-weight: 700 !important;
@@ -58,17 +63,17 @@ body {
 .react-datepicker__day--selected,
 .react-datepicker__day--range-start,
 .react-datepicker__day--range-end {
-  background-color: #14b8a6 !important;
+  background-color: #E8552A !important;
   color: white !important;
   font-weight: 600 !important;
 }
 .react-datepicker__day--in-selecting-range,
 .react-datepicker__day--in-range {
-  background-color: rgba(20, 184, 166, 0.2) !important;
+  background-color: rgba(232, 85, 42, 0.2) !important;
   color: white !important;
 }
 .react-datepicker__day--keyboard-selected {
-  background-color: #1c1c20 !important;
+  background-color: #202020 !important;
 }
 .react-datepicker__day--outside-month {
   color: rgba(255, 255, 255, 0.15) !important;

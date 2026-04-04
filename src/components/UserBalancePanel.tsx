@@ -41,7 +41,7 @@ export default function UserBalancePanel({ userId }: Props) {
   return (
     <div className="flex flex-col gap-4">
       {/* Balance cards */}
-      <div className="bg-surface-1 rounded-2xl border border-white/[0.06] px-6 py-5">
+      <div className="bg-surface-1 rounded-2xl px-6 py-5">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex divide-x divide-white/[0.06] gap-0">
             <div className="pr-8 flex flex-col gap-1.5">
@@ -72,7 +72,7 @@ export default function UserBalancePanel({ userId }: Props) {
           <button
             type="button"
             onClick={() => setShowModal(true)}
-            className="px-4 py-2 bg-brand hover:bg-brand-hover text-white text-sm font-semibold rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand shrink-0"
+            className="px-4 py-2 bg-brand hover:bg-brand-hover active:scale-[0.97] text-white text-sm font-semibold rounded-xl transition-[color,background-color,transform] duration-[160ms] ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand shrink-0"
           >
             Simular Saque
           </button>
@@ -87,7 +87,7 @@ export default function UserBalancePanel({ userId }: Props) {
       )}
 
       {/* Payout logs table */}
-      <div className="bg-surface-1 rounded-2xl border border-white/[0.06]">
+      <div className="bg-surface-1 rounded-2xl">
         <div className="px-5 py-4 border-b border-white/[0.06]">
           <h3 className="text-sm font-semibold text-white">Histórico de Saques</h3>
         </div>
@@ -120,7 +120,7 @@ export default function UserBalancePanel({ userId }: Props) {
                 </tr>
               ) : (
                 data.payout_logs.data.map((log) => (
-                  <tr key={log.id} className="hover:bg-white/[0.02] transition-colors">
+                  <tr key={log.id} className="fine-hover:bg-white/[0.02] transition-colors">
                     <td className="py-3.5 px-4 text-white/40 tabular-nums">
                       {new Date(log.created_at).toLocaleDateString('pt-PT')}
                     </td>

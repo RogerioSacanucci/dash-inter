@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react';
+import LordIcon from '../components/ui/LordIcon';
+import transferIcon from '../icons/transfer.json';
+import shoppingCartIcon from '../icons/shopping-cart.json';
 import { api, AdminUser, UserShopBalance } from '../api/client';
 import DateRangeFilter from '../components/DateRangeFilter';
 import { getStoredUtcOffset } from '../utils/dates';
@@ -51,29 +54,32 @@ export default function Dashboard() {
     let cancelled = false;
     api.getOwnShopBalances()
       .then(({ shop_balances }) => { if (!cancelled) setShopBalances(shop_balances); })
-      .catch(() => { /* shop balances are optional — card simply won't render */ });
+      .catch(() => {});
     return () => { cancelled = true; };
   }, [isAdmin]);
 
   const ov = stats?.overview;
 
+  const balanceReleased = cpStats
+    ? parseFloat(cpStats.overview.balance_released || '0').toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : null;
+
   return (
-    <div className="flex flex-col gap-6">
-      {/* Welcome */}
+    <div className="flex flex-col gap-5">
+      {/* Page header */}
       <div>
-        <h1 className="text-xl font-bold text-white">Bem-vindo, {user?.email}!</h1>
+        <h1 className="text-lg font-semibold text-white">Dashboard</h1>
+        {isAdmin && (
+          <p className="text-sm text-white/40 mt-0.5">
+            {selectedAccount
+              ? `Conta: ${accounts.find((a) => a.id === Number(selectedAccount))?.email ?? ''}`
+              : 'Visão geral de todas as contas'}
+          </p>
+        )}
       </div>
 
-      {/* Header controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="text-sm text-white/40">
-          {isAdmin && (
-            selectedAccount
-              ? `Conta: ${accounts.find((a) => a.id === Number(selectedAccount))?.email ?? ''}`
-              : 'Visão geral de todas as contas'
-          )}
-        </div>
-
+      {/* Filters row */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           {/* Admin account selector */}
           {isAdmin && accounts.length > 0 && (
@@ -93,28 +99,28 @@ export default function Dashboard() {
 
           {/* Platform toggle */}
           {showToggle && (
-            <div className="flex bg-surface-1 border border-white/[0.06] rounded-lg p-1 gap-0.5">
+            <div className="flex bg-surface-1 rounded-lg p-1 gap-0.5">
               <button
                 type="button"
                 onClick={() => setActivePlatform('waymb')}
                 className={`px-3 py-1.5 rounded-md text-sm font-medium transition-[color,background-color,transform] duration-[160ms] ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0 ${
                   activePlatform === 'waymb'
-                    ? 'bg-brand text-white shadow-sm'
+                    ? 'bg-brand/10 text-brand'
                     : 'text-white/40 hover:text-white/70'
                 }`}
               >
-                ⇄ WayMB
+                <LordIcon icon={transferIcon} size={15} trigger="hover" colorize={activePlatform === 'waymb' ? '#E8552A' : 'rgba(255,255,255,0.45)'} /> WayMB
               </button>
               <button
                 type="button"
                 onClick={() => setActivePlatform('cartpanda')}
                 className={`px-3 py-1.5 rounded-md text-sm font-medium transition-[color,background-color,transform] duration-[160ms] ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0 ${
                   activePlatform === 'cartpanda'
-                    ? 'bg-white/[0.08] text-white shadow-sm'
+                    ? 'bg-brand/10 text-brand'
                     : 'text-white/40 hover:text-white/70'
                 }`}
               >
-                🛒 Internacional
+                <LordIcon icon={shoppingCartIcon} size={15} trigger="hover" colorize={activePlatform === 'cartpanda' ? '#E8552A' : 'rgba(255,255,255,0.45)'} /> Internacional
               </button>
             </div>
           )}
@@ -137,6 +143,14 @@ export default function Dashboard() {
             onUtcOffsetChange={setUtcOffset}
           />
         </div>
+
+        {/* Balance — right side, only for cartpanda */}
+        {activePlatform === 'cartpanda' && balanceReleased && (
+          <div className="text-sm text-white/40">
+            Disponível para saque:{' '}
+            <span className="text-emerald-400 font-semibold tabular-nums">${' '}{balanceReleased}</span>
+          </div>
+        )}
       </div>
 
       {/* Error */}
@@ -165,7 +179,7 @@ export default function Dashboard() {
 
           {/* Conversion card */}
           {ov && stats.conversions.length > 0 && (
-            <div className="bg-surface-1 rounded-2xl border border-white/[0.06] p-6">
+            <div className="bg-surface-1 rounded-2xl p-6">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="font-semibold text-white">Análise de Conversão</h2>
                 <span className={`text-xs font-semibold tabular-nums ${ov.declined_rate > 10 ? 'text-red-400' : 'text-white/30'}`}>
@@ -218,7 +232,7 @@ export default function Dashboard() {
           )}
 
           {/* Volume chart */}
-          <div className="bg-surface-1 rounded-2xl border border-white/[0.06] p-6">
+          <div className="bg-surface-1 rounded-2xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-white">
                 {stats.hourly ? 'Transações por Hora' : 'Volume de Pagamentos'}
@@ -240,7 +254,7 @@ export default function Dashboard() {
           {/* Method breakdown */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {stats.methods.map((m) => (
-              <div key={m.method} className="bg-surface-1 rounded-2xl border border-white/[0.06] p-5">
+              <div key={m.method} className="bg-surface-1 rounded-2xl p-5">
                 <p className="text-xs font-semibold uppercase tracking-widest text-white/30 mb-3">
                   {m.method === 'mbway' ? 'MB WAY' : 'Multibanco'}
                 </p>
@@ -254,18 +268,8 @@ export default function Dashboard() {
         </div>
       ) : activePlatform === 'cartpanda' && cpStats ? (
         <div key="cartpanda" className="flex flex-col gap-6 animate-fade-in">
-          {/* Balance badge */}
-          <div className="flex items-center justify-end">
-            <div className="bg-surface-1 border border-white/[0.06] rounded-lg px-3 py-1.5 text-sm">
-              <span className="text-white/40">Disponível para saque:</span>{' '}
-              <span className="text-brand font-semibold tabular-nums">
-                ${' '}{parseFloat(cpStats.overview.balance_released || '0').toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
-            </div>
-          </div>
-
           {/* Main chart card */}
-          <div className="bg-surface-1 rounded-2xl border border-white/[0.06] p-6">
+          <div className="bg-surface-1 rounded-2xl p-6">
             <div className="flex items-center justify-between mb-4">
               <select
                 value={chartMetric}
@@ -300,14 +304,14 @@ export default function Dashboard() {
 
           {/* Two mini-cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-surface-1 rounded-2xl border border-white/[0.06] p-5">
+            <div className="bg-surface-1 rounded-2xl p-5">
               <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest mb-2">Total de pedidos</p>
               <p className="text-3xl font-bold text-white tabular-nums">{cpStats.overview.total_orders}</p>
               {cpStats.overview.pending > 0 && (
                 <p className="text-xs text-white/30 mt-1">{cpStats.overview.pending} pendentes</p>
               )}
             </div>
-            <div className="bg-surface-1 rounded-2xl border border-white/[0.06] p-5">
+            <div className="bg-surface-1 rounded-2xl p-5">
               <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest mb-2">Completos</p>
               <p className="text-3xl font-bold text-white tabular-nums">{cpStats.overview.completed}</p>
             </div>

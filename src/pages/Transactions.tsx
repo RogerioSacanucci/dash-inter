@@ -176,7 +176,7 @@ export default function Transactions() {
       </div>
 
       {/* Table */}
-      <div className="bg-surface-1 rounded-2xl border border-white/[0.06]">
+      <div className="bg-surface-1 rounded-2xl">
         {error ? (
           <div className="p-6 text-sm text-red-400 flex items-center justify-between gap-4">
             <span>{error}</span>
