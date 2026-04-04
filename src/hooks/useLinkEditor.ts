@@ -1,39 +1,40 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client';
 
 export function useLinkEditor(linkId: number) {
+  const queryClient = useQueryClient();
   const [content, setContent] = useState('');
-  const [originalContent, setOriginalContent] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['link-content', linkId],
+    queryFn: () => api.getLinkContent(linkId),
+  });
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-    api.getLinkContent(linkId)
-      .then((res) => { setContent(res.content); setOriginalContent(res.content); })
-      .catch(() => setError('Erro ao carregar conteudo do arquivo'))
-      .finally(() => setLoading(false));
-  }, [linkId]);
-
-  const save = useCallback(async (): Promise<boolean> => {
-    setSaving(true);
-    setSaveError(null);
-    try {
-      await api.saveLinkContent(linkId, content);
-      setOriginalContent(content);
-      return true;
-    } catch {
-      setSaveError('Erro ao salvar arquivo');
-      return false;
-    } finally {
-      setSaving(false);
+    if (data) {
+      setContent(data.content);
     }
-  }, [linkId, content]);
+  }, [data]);
 
-  const isDirty = content !== originalContent;
+  const originalContent =
+    queryClient.getQueryData<{ content: string }>(['link-content', linkId])
+      ?.content ?? '';
 
-  return { content, setContent, loading, saving, error, saveError, save, isDirty };
+  const saveMutation = useMutation({
+    mutationFn: () => api.saveLinkContent(linkId, content),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['link-content', linkId] }),
+  });
+
+  return {
+    content,
+    setContent,
+    loading: isLoading,
+    saving: saveMutation.isPending,
+    error: error?.message ?? null,
+    saveError: saveMutation.error?.message ?? null,
+    save: useCallback(() => saveMutation.mutateAsync(), [saveMutation]),
+    isDirty: content !== originalContent,
+  };
 }

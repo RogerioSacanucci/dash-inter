@@ -1,25 +1,16 @@
-import { useCallback, useEffect, useState } from 'react';
-import { api, UserLink } from '../api/client';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../api/client';
 
 export function useLinks() {
-  const [links, setLinks] = useState<UserLink[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ['links'],
+    queryFn: () => api.links(),
+  });
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await api.links();
-      setLinks(res.data);
-    } catch {
-      setError('Erro ao carregar links');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
-
-  return { links, loading, error, reload: load };
+  return {
+    links: data?.data ?? [],
+    loading: isLoading,
+    error: error?.message ?? null,
+    reload: refetch,
+  };
 }
