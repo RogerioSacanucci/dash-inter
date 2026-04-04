@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import LordIcon from '../components/ui/LordIcon';
 import transferIcon from '../icons/transfer.json';
 import shoppingCartIcon from '../icons/shopping-cart.json';
-import { api, AdminUser, UserShopBalance } from '../api/client';
+import { api } from '../api/client';
 import DateRangeFilter from '../components/DateRangeFilter';
 import { getStoredUtcOffset } from '../utils/dates';
 import { useAuth } from '../hooks/useAuth';
@@ -23,9 +24,7 @@ export default function Dashboard() {
   const [utcOffset, setUtcOffset] = useState(getStoredUtcOffset);
   const [chartMetric, setChartMetric] = useState<'total_volume' | 'net_volume' | 'orders'>('total_volume');
 
-  const [accounts, setAccounts]             = useState<AdminUser[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string>('');
-  const [shopBalances, setShopBalances] = useState<UserShopBalance[]>([]);
 
   const hasWayMb = isAdmin || !!user?.payer_email;
   const hasCartpanda = isAdmin || !!user?.cartpanda_param;
@@ -44,20 +43,21 @@ export default function Dashboard() {
     document.title = 'Dashboard';
   }, []);
 
-  useEffect(() => {
-    if (isAdmin) {
-      api.users().then(({ users }) => setAccounts(users)).catch(() => {});
-    }
-  }, [isAdmin]);
+  const { data: accountsData } = useQuery({
+    queryKey: ['admin-users'],
+    queryFn: () => api.users(),
+    enabled: isAdmin,
+    staleTime: 60_000,
+  });
+  const accounts = accountsData?.users ?? [];
 
-  useEffect(() => {
-    if (isAdmin) return;
-    let cancelled = false;
-    api.getOwnShopBalances()
-      .then(({ shop_balances }) => { if (!cancelled) setShopBalances(shop_balances); })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [isAdmin]);
+  const { data: shopBalancesData } = useQuery({
+    queryKey: ['shop-balances'],
+    queryFn: () => api.getOwnShopBalances(),
+    enabled: !isAdmin,
+    staleTime: 0,
+  });
+  const shopBalances = shopBalancesData?.shop_balances ?? [];
 
   const ov = stats?.overview;
 
