@@ -1,9 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
-import { api, CartpandaOrdersResponse, CartpandaStatsResponse, AdminUser } from '../api/client';
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { api, AdminUser } from '../api/client';
 import { useAuth } from '../hooks/useAuth';
 import CartpandaOrderTable from '../components/CartpandaOrderTable';
 import CartpandaStatsCards from '../components/CartpandaStatsCards';
 import DateRangeFilter from '../components/DateRangeFilter';
+import { FetchingIndicator } from '../components/ui/FetchingIndicator';
+import { SkeletonCartpandaStats, SkeletonTableRows } from '../components/ui/Skeleton';
 import { getStoredUtcOffset, periodToDates } from '../utils/dates';
 
 const STATUSES = ['', 'PENDING', 'COMPLETED', 'FAILED', 'DECLINED', 'REFUNDED'];
@@ -20,11 +23,6 @@ export default function CartpandaOrders() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
 
-  const [data, setData] = useState<CartpandaOrdersResponse | null>(null);
-  const [cpStats, setCpStats] = useState<CartpandaStatsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   const [status, setStatus] = useState('');
   const [utcOffset, setUtcOffset] = useState(getStoredUtcOffset);
   const [period, setPeriod] = useState('today');
@@ -33,7 +31,7 @@ export default function CartpandaOrders() {
   const [orderId, setOrderId] = useState('');
   const [page, setPage] = useState(1);
 
-  const [accounts, setAccounts]         = useState<AdminUser[]>([]);
+  const [accounts, setAccounts] = useState<AdminUser[]>([]);
   const [selectedAccount, setSelectedAccount] = useState('');
 
   useEffect(() => {
@@ -46,35 +44,30 @@ export default function CartpandaOrders() {
     }
   }, [isAdmin]);
 
-  const fetchData = useCallback(() => {
-    setLoading(true);
-    setError(null);
+  const orderParams: Record<string, string> = { page: String(page), utc_offset: String(utcOffset) };
+  if (status) orderParams.status = status;
+  if (dateFrom) orderParams.date_from = dateFrom;
+  if (dateTo) orderParams.date_to = dateTo;
+  if (orderId.trim()) orderParams.order_id = orderId.trim();
+  if (isAdmin && selectedAccount) orderParams.user_id = selectedAccount;
 
-    const params: Record<string, string> = { page: String(page) };
-    if (status) params.status = status;
-    if (dateFrom) params.date_from = dateFrom;
-    if (dateTo) params.date_to = dateTo;
-    if (orderId.trim()) params.order_id = orderId.trim();
-    if (isAdmin && selectedAccount) params.user_id = selectedAccount;
-    params.utc_offset = String(utcOffset);
+  const ordersQuery = useQuery({
+    queryKey: ['cartpanda-orders', orderParams],
+    queryFn: () => api.cartpandaOrders(orderParams),
+  });
 
-    api.cartpandaOrders(params)
-      .then(setData)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-
-    api.cartpandaStats(
-      period || 'today',
-      dateFrom || undefined,
-      dateTo || undefined,
-      isAdmin && selectedAccount ? selectedAccount : undefined,
-      utcOffset,
-    )
-      .then(setCpStats)
-      .catch(() => {});
-  }, [status, dateFrom, dateTo, orderId, page, period, isAdmin, selectedAccount, utcOffset]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+  const statsQuery = useQuery({
+    queryKey: ['cartpanda-stats', period, dateFrom, dateTo, selectedAccount, utcOffset],
+    queryFn: () =>
+      api.cartpandaStats(
+        period || 'today',
+        dateFrom || undefined,
+        dateTo || undefined,
+        isAdmin && selectedAccount ? selectedAccount : undefined,
+        utcOffset,
+      ),
+    throwOnError: false,
+  });
 
   function handleFilter(e: React.FormEvent) {
     e.preventDefault();
@@ -91,18 +84,20 @@ export default function CartpandaOrders() {
     setPage(1);
   }
 
-  const totalPages = data?.meta.pages ?? 1;
+  const totalPages = ordersQuery.data?.meta.pages ?? 1;
 
   const inputCls = "bg-surface-1 border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition-colors";
 
   return (
     <div className="flex flex-col gap-6">
+      <FetchingIndicator isFetching={ordersQuery.isFetching && !ordersQuery.isLoading} />
+
       {/* Header + Filters */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-white">Pedidos Internacional</h1>
           <p className="text-sm text-white/40 mt-0.5">
-            {data ? `${data.meta.total} pedidos encontrados` : ''}
+            {ordersQuery.data ? `${ordersQuery.data.meta.total} pedidos encontrados` : ''}
           </p>
         </div>
 
@@ -174,23 +169,47 @@ export default function CartpandaOrders() {
       </div>
 
       {/* Stats */}
-      {cpStats && <CartpandaStatsCards overview={cpStats.overview} />}
+      {statsQuery.isLoading ? (
+        <SkeletonCartpandaStats />
+      ) : (
+        statsQuery.data && <CartpandaStatsCards overview={statsQuery.data.overview} />
+      )}
 
       {/* Table */}
       <div className="bg-surface-1 rounded-2xl border border-white/[0.06]">
-        {error ? (
+        {ordersQuery.error ? (
           <div className="p-6 text-sm text-red-400 flex items-center justify-between gap-4">
-            <span>{error}</span>
+            <span>{ordersQuery.error.message}</span>
             <button
-              onClick={fetchData}
+              onClick={() => ordersQuery.refetch()}
               className="shrink-0 font-semibold underline underline-offset-2 hover:text-red-300 transition-transform duration-[160ms] ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded"
             >
               Tentar novamente
             </button>
           </div>
+        ) : ordersQuery.isLoading ? (
+          <table className="w-full text-sm">
+            <caption className="sr-only">Carregando pedidos Internacional</caption>
+            <thead>
+              <tr className="border-b border-white/[0.06]">
+                {['ID Pedido', 'Valor', 'Evento', 'Status', 'Comprador', 'Data'].map((h) => (
+                  <th
+                    key={h}
+                    scope="col"
+                    className="text-left py-3 px-4 text-xs font-semibold text-white/30 uppercase tracking-widest"
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <SkeletonTableRows cols={[30, 15, 20, 18, 25, 20]} />
+            </tbody>
+          </table>
         ) : (
           <>
-            <CartpandaOrderTable orders={data?.data ?? []} loading={loading} />
+            <CartpandaOrderTable orders={ordersQuery.data?.data ?? []} />
 
             {/* Pagination */}
             {totalPages > 1 && (
