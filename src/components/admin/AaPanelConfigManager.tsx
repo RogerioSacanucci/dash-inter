@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   api,
   AdminAaPanelConfig,
-  AdminUser,
   CreateAaPanelConfigPayload,
   UpdateAaPanelConfigPayload,
 } from '../../api/client';
@@ -17,32 +17,41 @@ interface FormState {
 const emptyForm: FormState = { user_id: '', label: '', panel_url: '', api_key: '' };
 
 export default function AaPanelConfigManager() {
-  const [configs, setConfigs] = useState<AdminAaPanelConfig[]>([]);
-  const [users, setUsers] = useState<AdminUser[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
-  const [saving, setSaving] = useState(false);
 
-  const fetchData = useCallback(() => {
-    setLoading(true);
-    setError(null);
-    Promise.all([api.adminAaPanelConfigs(), api.adminUsers(1)])
-      .then(([configsRes, usersRes]) => {
-        setConfigs(configsRes.data);
-        setUsers(usersRes.data);
-      })
-      .catch((err) =>
-        setError(err instanceof Error ? err.message : 'Erro ao carregar configurações.'),
-      )
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: configsData, isLoading: loadingConfigs } = useQuery({
+    queryKey: ['aa-panel-configs'],
+    queryFn: () => api.adminAaPanelConfigs(),
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const { data: usersData, isLoading: loadingUsers } = useQuery({
+    queryKey: ['admin-users'],
+    queryFn: () => api.adminUsers(1),
+  });
+
+  const configs = configsData?.data ?? [];
+  const users = usersData?.data ?? [];
+  const loading = loadingConfigs || loadingUsers;
+
+  const createMutation = useMutation({
+    mutationFn: (payload: CreateAaPanelConfigPayload) => api.adminCreateAaPanelConfig(payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['aa-panel-configs'] }),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: UpdateAaPanelConfigPayload }) =>
+      api.adminUpdateAaPanelConfig(id, payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['aa-panel-configs'] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => api.adminDeleteAaPanelConfig(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['aa-panel-configs'] }),
+  });
 
   function openCreate() {
     setEditingId(null);
@@ -69,7 +78,6 @@ export default function AaPanelConfigManager() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
     setError(null);
 
     try {
@@ -80,22 +88,18 @@ export default function AaPanelConfigManager() {
           panel_url: form.panel_url,
           api_key: form.api_key,
         };
-        const created = await api.adminCreateAaPanelConfig(payload);
-        setConfigs((prev) => [created, ...prev]);
+        await createMutation.mutateAsync(payload);
       } else {
         const payload: UpdateAaPanelConfigPayload = {
           label: form.label,
           panel_url: form.panel_url,
           ...(form.api_key ? { api_key: form.api_key } : {}),
         };
-        const updated = await api.adminUpdateAaPanelConfig(editingId, payload);
-        setConfigs((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+        await updateMutation.mutateAsync({ id: editingId, payload });
       }
       closeForm();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao salvar configuração.');
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -103,8 +107,7 @@ export default function AaPanelConfigManager() {
     if (!confirm(`Remover "${config.label}"? Links associados também serão removidos.`)) return;
     setError(null);
     try {
-      await api.adminDeleteAaPanelConfig(config.id);
-      setConfigs((prev) => prev.filter((c) => c.id !== config.id));
+      await deleteMutation.mutateAsync(config.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao remover configuração.');
     }
@@ -113,6 +116,8 @@ export default function AaPanelConfigManager() {
   function updateField(field: keyof FormState, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
+
+  const saving = createMutation.isPending || updateMutation.isPending;
 
   return (
     <div>
@@ -248,7 +253,8 @@ export default function AaPanelConfigManager() {
                   <button
                     type="button"
                     onClick={() => handleDelete(config)}
-                    className="px-3 py-1 text-xs text-red-400 hover:text-red-300 border border-zinc-800 rounded-lg transition-colors"
+                    disabled={deleteMutation.isPending}
+                    className="px-3 py-1 text-xs text-red-400 hover:text-red-300 border border-zinc-800 rounded-lg transition-colors disabled:opacity-50"
                   >
                     Remover
                   </button>

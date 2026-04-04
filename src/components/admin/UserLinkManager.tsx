@@ -1,9 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   api,
   AdminUserLink,
-  AdminUser,
-  AdminAaPanelConfig,
   CreateUserLinkPayload,
   UpdateUserLinkPayload,
 } from '../../api/client';
@@ -27,15 +26,11 @@ const emptyForm: FormState = {
 };
 
 export default function UserLinkManager() {
-  const [links, setLinks] = useState<AdminUserLink[]>([]);
-  const [users, setUsers] = useState<AdminUser[]>([]);
-  const [configs, setConfigs] = useState<AdminAaPanelConfig[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
-  const [saving, setSaving] = useState(false);
   const [copiedId, setCopiedId] = useState<number | null>(null);
 
   function copyLink(id: number, url: string) {
@@ -45,24 +40,41 @@ export default function UserLinkManager() {
     });
   }
 
-  const fetchData = useCallback(() => {
-    setLoading(true);
-    setError(null);
-    Promise.all([api.adminUserLinks(), api.adminUsers(1), api.adminAaPanelConfigs()])
-      .then(([linksRes, usersRes, configsRes]) => {
-        setLinks(linksRes.data);
-        setUsers(usersRes.data);
-        setConfigs(configsRes.data);
-      })
-      .catch((err) =>
-        setError(err instanceof Error ? err.message : 'Erro ao carregar links.'),
-      )
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: linksData, isLoading: loadingLinks } = useQuery({
+    queryKey: ['user-links'],
+    queryFn: () => api.adminUserLinks(),
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const { data: usersData, isLoading: loadingUsers } = useQuery({
+    queryKey: ['admin-users'],
+    queryFn: () => api.adminUsers(1),
+  });
+
+  const { data: configsData, isLoading: loadingConfigs } = useQuery({
+    queryKey: ['aa-panel-configs'],
+    queryFn: () => api.adminAaPanelConfigs(),
+  });
+
+  const links = linksData?.data ?? [];
+  const users = usersData?.data ?? [];
+  const configs = configsData?.data ?? [];
+  const loading = loadingLinks || loadingUsers || loadingConfigs;
+
+  const createMutation = useMutation({
+    mutationFn: (payload: CreateUserLinkPayload) => api.adminCreateUserLink(payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['user-links'] }),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: UpdateUserLinkPayload }) =>
+      api.adminUpdateUserLink(id, payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['user-links'] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => api.adminDeleteUserLink(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['user-links'] }),
+  });
 
   function openCreate() {
     setEditingId(null);
@@ -91,7 +103,6 @@ export default function UserLinkManager() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
     setError(null);
 
     try {
@@ -103,22 +114,18 @@ export default function UserLinkManager() {
           external_url: form.external_url,
           file_path: form.is_static ? null : form.file_path,
         };
-        const created = await api.adminCreateUserLink(payload);
-        setLinks((prev) => [created, ...prev]);
+        await createMutation.mutateAsync(payload);
       } else {
         const payload: UpdateUserLinkPayload = {
           label: form.label,
           external_url: form.external_url,
           file_path: form.is_static ? null : form.file_path,
         };
-        const updated = await api.adminUpdateUserLink(editingId, payload);
-        setLinks((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
+        await updateMutation.mutateAsync({ id: editingId, payload });
       }
       closeForm();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao salvar link.');
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -126,8 +133,7 @@ export default function UserLinkManager() {
     if (!confirm(`Remover "${link.label}"?`)) return;
     setError(null);
     try {
-      await api.adminDeleteUserLink(link.id);
-      setLinks((prev) => prev.filter((l) => l.id !== link.id));
+      await deleteMutation.mutateAsync(link.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao remover link.');
     }
@@ -148,6 +154,8 @@ export default function UserLinkManager() {
   const filteredConfigs = configs.filter(
     (c) => !form.user_id || c.user_id === Number(form.user_id),
   );
+
+  const saving = createMutation.isPending || updateMutation.isPending;
 
   return (
     <div>
@@ -344,7 +352,8 @@ export default function UserLinkManager() {
                   <button
                     type="button"
                     onClick={() => handleDelete(link)}
-                    className="px-3 py-1 text-xs text-red-400 hover:text-red-300 border border-zinc-800 rounded-lg transition-colors"
+                    disabled={deleteMutation.isPending}
+                    className="px-3 py-1 text-xs text-red-400 hover:text-red-300 border border-zinc-800 rounded-lg transition-colors disabled:opacity-50"
                   >
                     Remover
                   </button>
