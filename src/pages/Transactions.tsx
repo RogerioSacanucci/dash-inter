@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
-import { api, Transaction, TransactionsResponse, AdminUser } from '../api/client';
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { api, AdminUser } from '../api/client';
 import { useAuth } from '../hooks/useAuth';
+import { FetchingIndicator } from '../components/ui/FetchingIndicator';
 import TransactionTable from '../components/TransactionTable';
 import DateRangeFilter from '../components/DateRangeFilter';
 import { getStoredUtcOffset, periodToDates } from '../utils/dates';
@@ -18,10 +20,6 @@ const STATUS_LABELS: Record<string, string> = {
 export default function Transactions() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
-
-  const [data, setData] = useState<TransactionsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const [status, setStatus] = useState('');
   const [method, setMethod] = useState('');
@@ -45,26 +43,21 @@ export default function Transactions() {
     }
   }, [isAdmin]);
 
-  const fetchData = useCallback(() => {
-    setLoading(true);
-    setError(null);
+  const params: Record<string, string> = {
+    page: String(page),
+    ...(status && { status }),
+    ...(method && { method }),
+    ...(dateFrom && { date_from: dateFrom }),
+    ...(dateTo && { date_to: dateTo }),
+    ...(txId.trim() && { transaction_id: txId.trim() }),
+    ...(isAdmin && selectedAccount ? { user_id: selectedAccount } : {}),
+    utc_offset: String(utcOffset),
+  };
 
-    const params: Record<string, string> = { page: String(page) };
-    if (status) params.status = status;
-    if (method) params.method = method;
-    if (dateFrom) params.date_from = dateFrom;
-    if (dateTo) params.date_to = dateTo;
-    if (txId.trim()) params.transaction_id = txId.trim();
-    if (isAdmin && selectedAccount) params.user_id = selectedAccount;
-    params.utc_offset = String(utcOffset);
-
-    api.transactions(params)
-      .then(setData)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, [status, method, dateFrom, dateTo, txId, page, isAdmin, selectedAccount, utcOffset]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+  const { data, isLoading, isFetching, error, refetch } = useQuery({
+    queryKey: ['transactions', params],
+    queryFn: () => api.transactions(params),
+  });
 
   function handleFilter(e: React.FormEvent) {
     e.preventDefault();
@@ -177,11 +170,12 @@ export default function Transactions() {
 
       {/* Table */}
       <div className="bg-surface-1 rounded-2xl">
+        <FetchingIndicator isFetching={isFetching && !isLoading} />
         {error ? (
           <div className="p-6 text-sm text-red-400 flex items-center justify-between gap-4">
-            <span>{error}</span>
+            <span>{error.message}</span>
             <button
-              onClick={fetchData}
+              onClick={() => refetch()}
               className="shrink-0 font-semibold underline underline-offset-2 hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded"
             >
               Tentar novamente
@@ -189,7 +183,7 @@ export default function Transactions() {
           </div>
         ) : (
           <>
-            <TransactionTable transactions={data?.data ?? []} loading={loading} />
+            <TransactionTable transactions={data?.data ?? []} loading={isLoading} />
 
             {/* Pagination */}
             {totalPages > 1 && (

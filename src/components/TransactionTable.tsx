@@ -1,4 +1,5 @@
 import { Transaction } from '../api/client';
+import { SkeletonTableRows } from './ui/Skeleton';
 
 const STATUS_CLASSES: Record<string, string> = {
   COMPLETED: 'bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20',
@@ -24,8 +25,26 @@ interface Props {
 export default function TransactionTable({ transactions, loading }: Props) {
   if (loading) {
     return (
-      <div className="flex justify-center py-16 text-white/20 text-sm">
-        Carregando...
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <caption className="sr-only">Lista de transações</caption>
+          <thead>
+            <tr className="border-b border-white/[0.06]">
+              {['ID', 'Valor', 'Método', 'Status', 'Pagador', 'Data'].map((h) => (
+                <th
+                  key={h}
+                  scope="col"
+                  className="text-left py-3 px-4 text-xs font-semibold text-white/30 uppercase tracking-widest"
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <SkeletonTableRows rows={5} cols={[60, 30, 25, 35, 40, 45]} />
+          </tbody>
+        </table>
       </div>
     );
   }
