@@ -9,6 +9,7 @@ export function useLinkEditor(linkId: number) {
   const { data, isLoading, error } = useQuery({
     queryKey: ['link-content', linkId],
     queryFn: () => api.getLinkContent(linkId),
+    retry: false,
   });
 
   useEffect(() => {

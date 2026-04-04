@@ -27,6 +27,7 @@ export default function UserBalancePanel({ userId }: Props) {
 
   function handlePayoutSuccess(_balance: Balance) {
     setShowModal(false);
+    setPage(1);
     queryClient.invalidateQueries({ queryKey: ['user-balance', userId] });
   }
 

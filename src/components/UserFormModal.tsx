@@ -29,7 +29,6 @@ export default function UserFormModal({ user, onClose, onSave }: UserFormModalPr
   const { data: shopsData } = useQuery({
     queryKey: ['cartpanda-shops-all'],
     queryFn: () => api.adminCartpandaShops(),
-    staleTime: 30_000,
   });
   const allShops = shopsData?.data ?? [];
   const [userShops, setUserShops] = useState<AdminCartpandaShop[]>(user?.shops ?? []);

@@ -15,7 +15,7 @@ import { SkeletonStatsCards, SkeletonCartpandaStats, SkeletonChart } from '../co
 import { FetchingIndicator } from '../components/ui/FetchingIndicator';
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const isAdmin = user?.role === 'admin';
 
   const [period, setPeriod]         = useState('today');
@@ -34,20 +34,19 @@ export default function Dashboard() {
     useDashboardStats({ period, dateFrom, dateTo, selectedAccount, utcOffset });
 
   useEffect(() => {
-    if (!hasWayMb && hasCartpanda) {
+    if (!authLoading && (isAdmin || (!hasWayMb && hasCartpanda))) {
       setActivePlatform('cartpanda');
     }
-  }, [hasWayMb, hasCartpanda, setActivePlatform]);
+  }, [authLoading]);
 
   useEffect(() => {
     document.title = 'Dashboard';
   }, []);
 
   const { data: accountsData } = useQuery({
-    queryKey: ['admin-users'],
+    queryKey: ['users-list'],
     queryFn: () => api.users(),
     enabled: isAdmin,
-    staleTime: 60_000,
   });
   const accounts = accountsData?.users ?? [];
 

@@ -23,7 +23,10 @@ export default function UserManagement() {
 
   const createMutation = useMutation({
     mutationFn: (payload: CreateUserPayload) => api.adminCreateUser(payload),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-users'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ['users-list'] });
+    },
   });
 
   const updateMutation = useMutation({

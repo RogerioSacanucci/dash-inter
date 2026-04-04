@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { api, AdminUser } from '../api/client';
+import { api } from '../api/client';
 import { useAuth } from '../hooks/useAuth';
 import { FetchingIndicator } from '../components/ui/FetchingIndicator';
 import TransactionTable from '../components/TransactionTable';
@@ -30,18 +30,18 @@ export default function Transactions() {
   const [txId, setTxId] = useState('');
   const [page, setPage] = useState(1);
 
-  const [accounts, setAccounts]         = useState<AdminUser[]>([]);
   const [selectedAccount, setSelectedAccount] = useState('');
+
+  const { data: accountsData } = useQuery({
+    queryKey: ['users-list'],
+    queryFn: () => api.users(),
+    enabled: isAdmin,
+  });
+  const accounts = accountsData?.users ?? [];
 
   useEffect(() => {
     document.title = 'Transações';
   }, []);
-
-  useEffect(() => {
-    if (isAdmin) {
-      api.users().then(({ users }) => setAccounts(users)).catch(() => {});
-    }
-  }, [isAdmin]);
 
   const params: Record<string, string> = {
     page: String(page),

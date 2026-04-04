@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { api, AdminUser } from '../api/client';
+import { api } from '../api/client';
 import { useAuth } from '../hooks/useAuth';
 import CartpandaOrderTable from '../components/CartpandaOrderTable';
 import CartpandaStatsCards from '../components/CartpandaStatsCards';
@@ -31,18 +31,18 @@ export default function CartpandaOrders() {
   const [orderId, setOrderId] = useState('');
   const [page, setPage] = useState(1);
 
-  const [accounts, setAccounts] = useState<AdminUser[]>([]);
   const [selectedAccount, setSelectedAccount] = useState('');
+
+  const { data: accountsData } = useQuery({
+    queryKey: ['users-list'],
+    queryFn: () => api.users(),
+    enabled: isAdmin,
+  });
+  const accounts = accountsData?.users ?? [];
 
   useEffect(() => {
     document.title = 'Pedidos';
   }, []);
-
-  useEffect(() => {
-    if (isAdmin) {
-      api.users().then(({ users }) => setAccounts(users)).catch(() => {});
-    }
-  }, [isAdmin]);
 
   const orderParams: Record<string, string> = { page: String(page), utc_offset: String(utcOffset) };
   if (status) orderParams.status = status;
