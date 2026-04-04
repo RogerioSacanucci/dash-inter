@@ -10,6 +10,8 @@ import { useDashboardStats } from '../hooks/useDashboardStats';
 import StatsCards from '../components/StatsCards';
 import Chart from '../components/Chart';
 import ShopBalancesCard from '../components/ShopBalancesCard';
+import { SkeletonStatsCards, SkeletonCartpandaStats, SkeletonChart } from '../components/ui/Skeleton';
+import { FetchingIndicator } from '../components/ui/FetchingIndicator';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -18,7 +20,6 @@ export default function Dashboard() {
   const [period, setPeriod]         = useState('today');
   const [dateFrom, setDateFrom]     = useState('');
   const [dateTo, setDateTo]         = useState('');
-  const [retryCount, setRetryCount] = useState(0);
   const [utcOffset, setUtcOffset] = useState(getStoredUtcOffset);
   const [chartMetric, setChartMetric] = useState<'total_volume' | 'net_volume' | 'orders'>('total_volume');
 
@@ -30,8 +31,8 @@ export default function Dashboard() {
   const hasCartpanda = isAdmin || !!user?.cartpanda_param;
   const showToggle = hasWayMb && hasCartpanda;
 
-  const { activePlatform, setActivePlatform, stats, cpStats, loading, error } =
-    useDashboardStats({ period, dateFrom, dateTo, selectedAccount, utcOffset, retryCount });
+  const { activePlatform, setActivePlatform, stats, cpStats, loading, isFetching, error, refetch } =
+    useDashboardStats({ period, dateFrom, dateTo, selectedAccount, utcOffset });
 
   useEffect(() => {
     if (!hasWayMb && hasCartpanda) {
@@ -158,7 +159,7 @@ export default function Dashboard() {
         <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-sm text-red-400 flex items-center justify-between gap-4">
           <span>{error}</span>
           <button
-            onClick={() => setRetryCount((c) => c + 1)}
+            onClick={() => refetch()}
             className="shrink-0 font-semibold underline underline-offset-2 hover:text-red-300 transition-transform duration-[160ms] ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded"
           >
             Tentar novamente
@@ -166,12 +167,12 @@ export default function Dashboard() {
         </div>
       )}
 
+      <FetchingIndicator isFetching={isFetching && !loading} />
+
       {loading ? (
-        <div className="flex justify-center py-16">
-          <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none" aria-label="Carregando">
-            <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.08)" strokeWidth="2.5" />
-            <path d="M12 2a10 10 0 0 1 10 10" stroke="rgba(255,255,255,0.35)" strokeWidth="2.5" strokeLinecap="round" />
-          </svg>
+        <div className="flex flex-col gap-6">
+          {activePlatform === 'waymb' ? <SkeletonStatsCards /> : <SkeletonCartpandaStats />}
+          <SkeletonChart />
         </div>
       ) : activePlatform === 'waymb' && stats ? (
         <div key="waymb" className="flex flex-col gap-6 animate-fade-in">
