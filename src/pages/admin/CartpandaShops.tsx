@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { api, AdminCartpandaShopsResponse } from '../../api/client';
 import DateRangeFilter from '../../components/DateRangeFilter';
+import { FetchingIndicator } from '../../components/ui/FetchingIndicator';
 import { getStoredUtcOffset } from '../../utils/dates';
 
 function formatVolume(value: number): string {
@@ -14,29 +16,19 @@ function formatVolume(value: number): string {
 export default function CartpandaShops() {
   const navigate = useNavigate();
 
-  const [data, setData] = useState<AdminCartpandaShopsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   const [period, setPeriod] = useState('today');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [utcOffset, setUtcOffset] = useState(getStoredUtcOffset);
 
+  const { data, isLoading, isFetching, error, refetch } = useQuery<AdminCartpandaShopsResponse>({
+    queryKey: ['cartpanda-shops', period, dateFrom, dateTo, utcOffset],
+    queryFn: () => api.adminCartpandaShops(period, dateFrom || undefined, dateTo || undefined, utcOffset),
+  });
+
   useEffect(() => {
     document.title = 'Lojas Internacional';
   }, []);
-
-  const fetchData = useCallback(() => {
-    setLoading(true);
-    setError(null);
-    api.adminCartpandaShops(period, dateFrom || undefined, dateTo || undefined, utcOffset)
-      .then(setData)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, [period, dateFrom, dateTo, utcOffset]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
 
   const shops = data?.data ?? [];
 
@@ -73,11 +65,12 @@ export default function CartpandaShops() {
 
       {/* Table */}
       <div className="bg-surface-1 rounded-2xl border border-white/[0.06]">
+        <FetchingIndicator isFetching={isFetching && !isLoading} />
         {error ? (
           <div className="p-6 text-sm text-red-400 flex items-center justify-between gap-4">
-            <span>{error}</span>
+            <span>{(error as Error).message}</span>
             <button
-              onClick={fetchData}
+              onClick={() => refetch()}
               className="shrink-0 font-semibold underline underline-offset-2 hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded"
             >
               Tentar novamente
@@ -97,7 +90,7 @@ export default function CartpandaShops() {
                 </tr>
               </thead>
               <tbody>
-                {loading ? (
+                {isLoading ? (
                   Array.from({ length: 4 }).map((_, i) => (
                     <tr key={i} className="border-b border-white/[0.06] last:border-0">
                       <td className="px-4 py-3"><div className="h-4 w-32 bg-white/[0.06] rounded animate-pulse" /></td>
