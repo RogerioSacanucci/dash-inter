@@ -1,4 +1,5 @@
 import { useState, useEffect, FormEvent } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { api, AdminUser, AdminCartpandaShop, CreateUserPayload, UpdateUserPayload } from '../api/client';
 
 interface UserFormModalProps {
@@ -25,14 +26,15 @@ export default function UserFormModal({ user, onClose, onSave }: UserFormModalPr
   const [error, setError] = useState<string | null>(null);
 
   // Shop management
-  const [allShops, setAllShops] = useState<AdminCartpandaShop[]>([]);
+  const { data: shopsData } = useQuery({
+    queryKey: ['cartpanda-shops-all'],
+    queryFn: () => api.adminCartpandaShops(),
+    staleTime: 30_000,
+  });
+  const allShops = shopsData?.data ?? [];
   const [userShops, setUserShops] = useState<AdminCartpandaShop[]>(user?.shops ?? []);
   const [selectedShopId, setSelectedShopId] = useState('');
   const [shopLoading, setShopLoading] = useState(false);
-
-  useEffect(() => {
-    api.adminCartpandaShops().then((res) => setAllShops(res.data));
-  }, []);
 
   const availableShops = allShops.filter(
     (shop) => !userShops.some((us) => us.id === shop.id),
