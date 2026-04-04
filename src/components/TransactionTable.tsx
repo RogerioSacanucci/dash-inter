@@ -57,7 +57,7 @@ export default function TransactionTable({ transactions, loading }: Props) {
         </thead>
         <tbody className="divide-y divide-white/[0.04]">
           {transactions.map((tx) => (
-            <tr key={tx.transaction_id} className="hover:bg-white/[0.02] transition-colors">
+            <tr key={tx.transaction_id} className="fine-hover:bg-white/[0.02] transition-colors">
               <td className="py-3.5 px-4 max-w-[140px]">
                 <span
                   className="block truncate font-mono text-xs text-white/30"
