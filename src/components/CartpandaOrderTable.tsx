@@ -18,18 +18,9 @@ const STATUS_LABELS: Record<string, string> = {
 
 interface Props {
   orders: CartpandaOrder[];
-  loading: boolean;
 }
 
-export default function CartpandaOrderTable({ orders, loading }: Props) {
-  if (loading) {
-    return (
-      <div className="flex justify-center py-16 text-white/20 text-sm">
-        Carregando...
-      </div>
-    );
-  }
-
+export default function CartpandaOrderTable({ orders }: Props) {
   if (!orders.length) {
     return (
       <div className="flex justify-center py-16 text-white/20 text-sm">
