@@ -1,7 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { api, AdminCartpandaShopDetailResponse } from '../../api/client';
 import DateRangeFilter from '../../components/DateRangeFilter';
+import { FetchingIndicator } from '../../components/ui/FetchingIndicator';
+import { SkeletonMetricCells, SkeletonChart, SkeletonTableRows } from '../../components/ui/Skeleton';
 import { getStoredUtcOffset } from '../../utils/dates';
 import Chart from '../../components/Chart';
 
@@ -39,32 +42,22 @@ export default function CartpandaShopDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const [data, setData] = useState<AdminCartpandaShopDetailResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   const [period, setPeriod] = useState('today');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [utcOffset, setUtcOffset] = useState(getStoredUtcOffset);
+
+  const { data, isLoading, isFetching, error, refetch } = useQuery<AdminCartpandaShopDetailResponse>({
+    queryKey: ['cartpanda-shop', id, period, dateFrom, dateTo, utcOffset],
+    queryFn: () => api.adminCartpandaShopDetail(Number(id), period, dateFrom || undefined, dateTo || undefined, utcOffset),
+    enabled: !!id,
+  });
 
   useEffect(() => {
     if (data?.shop.name) {
       document.title = data.shop.name;
     }
   }, [data?.shop.name]);
-
-  const fetchData = useCallback(() => {
-    if (!id) return;
-    setLoading(true);
-    setError(null);
-    api.adminCartpandaShopDetail(Number(id), period, dateFrom || undefined, dateTo || undefined, utcOffset)
-      .then(setData)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, [id, period, dateFrom, dateTo, utcOffset]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
 
   const metrics: Metric[] = data ? [
     { label: 'Volume', value: formatVolume(data.aggregate.total_volume), valueColor: 'text-emerald-400' },
@@ -119,9 +112,9 @@ export default function CartpandaShopDetail() {
       {/* Error */}
       {error && (
         <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-sm text-red-400 flex items-center justify-between gap-4">
-          <span>{error}</span>
+          <span>{(error as Error).message}</span>
           <button
-            onClick={fetchData}
+            onClick={() => refetch()}
             className="shrink-0 font-semibold underline underline-offset-2 hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded"
           >
             Tentar novamente
@@ -129,8 +122,35 @@ export default function CartpandaShopDetail() {
         </div>
       )}
 
-      {loading ? (
-        <div className="flex justify-center py-16 text-white/20 text-sm">Carregando...</div>
+      {/* FetchingIndicator for background refetches */}
+      <FetchingIndicator isFetching={isFetching && !isLoading} />
+
+      {isLoading ? (
+        <>
+          <SkeletonMetricCells />
+          <div className="bg-surface-1 rounded-2xl border border-white/[0.06] p-6">
+            <SkeletonChart />
+          </div>
+          <div className="bg-surface-1 rounded-2xl border border-white/[0.06]">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/[0.06] text-white/40 text-left">
+                    <th className="px-4 py-3 font-medium">Email</th>
+                    <th className="px-4 py-3 font-medium text-right hidden sm:table-cell">Pedidos</th>
+                    <th className="px-4 py-3 font-medium text-right hidden sm:table-cell">Concluídos</th>
+                    <th className="px-4 py-3 font-medium text-right">Volume</th>
+                    <th className="px-4 py-3 font-medium text-right hidden lg:table-cell">A Liberar</th>
+                    <th className="px-4 py-3 font-medium text-right hidden lg:table-cell">Liberado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <SkeletonTableRows rows={5} cols={[40, 15, 15, 15, 15, 15]} />
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       ) : data ? (
         <>
           {/* Stats cards */}
