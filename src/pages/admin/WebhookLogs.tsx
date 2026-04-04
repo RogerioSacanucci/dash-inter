@@ -1,5 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
-import { api, WebhookLog, WebhookLogsResponse } from '../../api/client';
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { api, WebhookLog } from '../../api/client';
+import { FetchingIndicator } from '../../components/ui/FetchingIndicator';
+import { SkeletonTableRows } from '../../components/ui/Skeleton';
 
 const EVENTS = ['order.paid', 'order.created', 'order.cancelled', 'order.chargeback', 'order.refunded'];
 const STATUSES = ['processed', 'ignored', 'failed'] as const;
@@ -38,9 +41,6 @@ function PayloadModal({ log, onClose }: { log: WebhookLog; onClose: () => void }
 }
 
 export default function WebhookLogs() {
-  const [data, setData] = useState<WebhookLogsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<WebhookLog | null>(null);
 
   const [event, setEvent] = useState('');
@@ -54,16 +54,18 @@ export default function WebhookLogs() {
     document.title = 'Webhook Logs';
   }, []);
 
-  const fetchData = useCallback(() => {
-    setLoading(true);
-    setError(null);
-    api.adminWebhookLogs({ event: event || undefined, status: status || undefined, shop_slug: shopSlug || undefined, date_from: dateFrom || undefined, date_to: dateTo || undefined, page })
-      .then(setData)
-      .catch((e) => setError(e instanceof Error ? e.message : 'Erro ao carregar logs.'))
-      .finally(() => setLoading(false));
-  }, [event, status, shopSlug, dateFrom, dateTo, page]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+  const { data, isLoading, isFetching, error, refetch } = useQuery({
+    queryKey: ['webhook-logs', { event, status, shopSlug, dateFrom, dateTo, page }],
+    queryFn: () =>
+      api.adminWebhookLogs({
+        event: event || undefined,
+        status: status || undefined,
+        shop_slug: shopSlug || undefined,
+        date_from: dateFrom || undefined,
+        date_to: dateTo || undefined,
+        page,
+      }),
+  });
 
   function handleClear() {
     setEvent('');
@@ -82,6 +84,8 @@ export default function WebhookLogs() {
         <h1 className="text-lg font-semibold text-white">Webhook Logs</h1>
         <span className="text-xs text-white/30">Retenção: 1 dia</span>
       </div>
+
+      <FetchingIndicator isFetching={isFetching && !isLoading} />
 
       {/* Filters */}
       <div className="bg-surface-1 border border-white/[0.06] rounded-2xl px-5 py-4 flex flex-wrap gap-3 items-end">
@@ -128,8 +132,8 @@ export default function WebhookLogs() {
 
       {error && (
         <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-sm text-red-400 flex items-center justify-between">
-          {error}
-          <button type="button" onClick={fetchData} className="text-red-400/70 hover:text-red-400 underline text-xs">Tentar novamente</button>
+          {error instanceof Error ? error.message : 'Erro ao carregar logs.'}
+          <button type="button" onClick={() => refetch()} className="text-red-400/70 hover:text-red-400 underline text-xs">Tentar novamente</button>
         </div>
       )}
 
@@ -145,10 +149,8 @@ export default function WebhookLogs() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.04]">
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="py-12 text-center text-white/20 text-sm">Carregando...</td>
-                </tr>
+              {isLoading ? (
+                <SkeletonTableRows rows={8} cols={[30, 20, 15, 15, 12, 25, 18]} />
               ) : !data?.data.length ? (
                 <tr>
                   <td colSpan={7} className="py-12 text-center text-white/20 text-sm">Nenhum log encontrado</td>

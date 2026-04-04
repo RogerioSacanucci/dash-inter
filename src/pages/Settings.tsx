@@ -1,6 +1,7 @@
 // src/pages/Settings.tsx
 import { useState, useEffect, FormEvent } from 'react';
-import { api, UserPushcutUrl } from '../api/client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '../api/client';
 import { useAuth } from '../hooks/useAuth';
 import Tabs, { Tab } from '../components/Tabs';
 import UserManagement from '../components/UserManagement';
@@ -27,58 +28,58 @@ export default function Settings() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   const [activeTab, setActiveTab] = useState('notifications');
-
-  // --- list state ---
-  const [urls, setUrls]         = useState<UserPushcutUrl[]>([]);
-  const [listLoading, setListLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   // --- add form state ---
   const [newUrl, setNewUrl]       = useState('');
   const [newLabel, setNewLabel]   = useState('');
   const [newNotify, setNewNotify] = useState<'all' | 'created' | 'paid'>('all');
-  const [adding, setAdding]       = useState(false);
   const [addError, setAddError]   = useState<string | null>(null);
 
   useEffect(() => {
     document.title = 'Configurações';
   }, []);
 
-  useEffect(() => {
-    api.pushcutUrls()
-      .then(({ data }) => setUrls(data))
-      .catch(() => {/* silent — list stays empty */})
-      .finally(() => setListLoading(false));
-  }, []);
+  const { data: urlsData, isLoading: listLoading } = useQuery({
+    queryKey: ['pushcut-urls'],
+    queryFn: () => api.pushcutUrls(),
+  });
+  const urls = urlsData?.data ?? [];
 
-  async function handleAdd(e: FormEvent) {
-    e.preventDefault();
-    setAdding(true);
-    setAddError(null);
-
-    try {
-      const { data } = await api.createPushcutUrl({
-        url: newUrl,
-        notify: newNotify,
-        label: newLabel.trim() || undefined,
-      });
-      setUrls((prev) => [...prev, data]);
+  const addMutation = useMutation({
+    mutationFn: (payload: { url: string; notify: 'all' | 'created' | 'paid'; label?: string }) =>
+      api.createPushcutUrl(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pushcut-urls'] });
       setNewUrl('');
       setNewLabel('');
       setNewNotify('all');
-    } catch (err) {
+      setAddError(null);
+    },
+    onError: (err) => {
       setAddError(err instanceof Error ? err.message : 'Erro ao adicionar URL.');
-    } finally {
-      setAdding(false);
-    }
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => api.deletePushcutUrl(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pushcut-urls'] });
+    },
+  });
+
+  function handleAdd(e: FormEvent) {
+    e.preventDefault();
+    setAddError(null);
+    addMutation.mutate({
+      url: newUrl,
+      notify: newNotify,
+      label: newLabel.trim() || undefined,
+    });
   }
 
-  async function handleDelete(id: number) {
-    try {
-      await api.deletePushcutUrl(id);
-      setUrls((prev) => prev.filter((u) => u.id !== id));
-    } catch {
-      // silent
-    }
+  function handleDelete(id: number) {
+    deleteMutation.mutate(id);
   }
 
   return (
@@ -160,10 +161,10 @@ export default function Settings() {
 
               <button
                 type="submit"
-                disabled={adding}
+                disabled={addMutation.isPending}
                 className="px-5 py-2.5 bg-brand hover:bg-brand-hover disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface-1"
               >
-                {adding ? 'Adicionando...' : 'Adicionar'}
+                {addMutation.isPending ? 'Adicionando...' : 'Adicionar'}
               </button>
             </form>
           </div>
