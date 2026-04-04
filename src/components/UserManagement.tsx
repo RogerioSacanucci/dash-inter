@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, AdminUser, CreateUserPayload, UpdateUserPayload } from '../api/client';
 import { useAuth } from '../hooks/useAuth';
 import UserTable from './UserTable';
@@ -7,42 +8,46 @@ import UserBalancePanel from './UserBalancePanel';
 
 export default function UserManagement() {
   const { user: currentUser } = useAuth();
-  const [users, setUsers] = useState<AdminUser[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [modalUser, setModalUser] = useState<AdminUser | null | undefined>(undefined);
   const [togglingId, setTogglingId] = useState<number | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const fetchUsers = useCallback(() => {
-    setLoading(true);
-    setError(null);
-    api.adminUsers()
-      .then(({ data }) => setUsers(data))
-      .catch((err) => setError(err instanceof Error ? err.message : 'Erro ao carregar utilizadores.'))
-      .finally(() => setLoading(false));
-  }, []);
+  const { data, isLoading } = useQuery({
+    queryKey: ['admin-users'],
+    queryFn: () => api.adminUsers(),
+  });
 
-  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+  const users = data?.data ?? [];
+
+  const createMutation = useMutation({
+    mutationFn: (payload: CreateUserPayload) => api.adminCreateUser(payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-users'] }),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: UpdateUserPayload }) =>
+      api.adminUpdateUser(id, payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-users'] }),
+  });
 
   async function handleSave(payload: CreateUserPayload | UpdateUserPayload): Promise<number | void> {
     if (modalUser === null) {
-      const { user: created } = await api.adminCreateUser(payload as CreateUserPayload);
-      setUsers((prev) => [created, ...prev]);
+      const { user: created } = await createMutation.mutateAsync(payload as CreateUserPayload);
       setModalUser(undefined);
       return created.id;
     } else if (modalUser) {
-      const { user: updated } = await api.adminUpdateUser(modalUser.id, payload as UpdateUserPayload);
-      setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+      await updateMutation.mutateAsync({ id: modalUser.id, payload: payload as UpdateUserPayload });
       setModalUser(undefined);
     }
   }
 
   async function handleToggleActive(user: AdminUser) {
     setTogglingId(user.id);
+    setError(null);
     try {
-      const { user: updated } = await api.adminUpdateUser(user.id, { active: !user.active });
-      setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+      await updateMutation.mutateAsync({ id: user.id, payload: { active: !user.active } });
     } catch {
       setError('Erro ao atualizar estado do utilizador.');
     } finally {
@@ -75,7 +80,7 @@ export default function UserManagement() {
       <div className="bg-surface-1 rounded-2xl border border-white/[0.06]">
         <UserTable
           users={users}
-          loading={loading}
+          loading={isLoading}
           currentUserId={currentUser?.id ?? 0}
           onEdit={(user) => setModalUser(user)}
           onToggleActive={handleToggleActive}
