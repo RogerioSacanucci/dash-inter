@@ -32,15 +32,20 @@ function formatChartDate(dateStr: string) {
   return d.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function ChartTooltip({ active, payload, label }: any) {
+interface ChartTooltipProps {
+  active?: boolean;
+  payload?: { name: string; value: number; color: string }[];
+  label?: string;
+}
+
+function ChartTooltip({ active, payload, label }: ChartTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-surface-2 border border-white/[0.08] rounded-xl shadow-xl p-3 text-sm">
       <p className="font-semibold text-white/60 mb-2 text-xs uppercase tracking-wide">
-        {formatChartDate(label)}
+        {formatChartDate(label!)}
       </p>
-      {payload.map((entry: { name: string; value: number; color: string }) => (
+      {payload.map((entry) => (
         <p key={entry.name} className="text-xs" style={{ color: entry.color }}>
           {entry.name === 'sent' ? 'Enviados' : entry.name === 'failed' ? 'Falhas' : 'Correções'}: {entry.value}
         </p>
