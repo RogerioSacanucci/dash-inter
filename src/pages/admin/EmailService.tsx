@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect, FormEvent } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
-import { api } from '../../api/client';
+import { api, EmailServiceInstance } from '../../api/client';
 import { FetchingIndicator } from '../../components/ui/FetchingIndicator';
 import { SkeletonTableRows } from '../../components/ui/Skeleton';
 
@@ -54,6 +54,300 @@ function ChartTooltip({ active, payload, label }: ChartTooltipProps) {
   );
 }
 
+const inputClass =
+  'w-full bg-surface-2 border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/20 outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition-colors';
+
+interface InstanceFormProps {
+  instance: EmailServiceInstance | null;
+  onClose: () => void;
+}
+
+function InstanceFormModal({ instance, onClose }: InstanceFormProps) {
+  const isEdit = instance !== null;
+  const queryClient = useQueryClient();
+
+  const [name, setName] = useState(instance?.name ?? '');
+  const [url, setUrl] = useState(instance?.url ?? '');
+  const [apiKey, setApiKey] = useState('');
+  const [active, setActive] = useState(instance?.active ?? true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose();
+    }
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [onClose]);
+
+  const createMutation = useMutation({
+    mutationFn: (payload: { name: string; url: string; api_key: string }) =>
+      api.adminCreateEmailInstance(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['email-instances'] });
+      onClose();
+    },
+    onError: (err: Error) => setError(err.message),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (payload: Partial<{ name: string; url: string; api_key: string; active: boolean }>) =>
+      api.adminUpdateEmailInstance(instance!.id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['email-instances'] });
+      onClose();
+    },
+    onError: (err: Error) => setError(err.message),
+  });
+
+  const saving = createMutation.isPending || updateMutation.isPending;
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (isEdit) {
+      const payload: Partial<{ name: string; url: string; api_key: string; active: boolean }> = { name, url, active };
+      if (apiKey) payload.api_key = apiKey;
+      updateMutation.mutate(payload);
+    } else {
+      if (!apiKey) { setError('API Key é obrigatória.'); return; }
+      createMutation.mutate({ name, url, api_key: apiKey });
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        className="bg-surface-1 rounded-2xl border border-white/[0.06] p-6 w-full max-w-md"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-bold text-white">
+            {isEdit ? 'Editar instância' : 'Nova instância'}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fechar"
+            className="p-1.5 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/[0.05] transition-colors"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-sm text-red-400">
+              {error}
+            </div>
+          )}
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-white/40 uppercase tracking-widest" htmlFor="ei-name">Nome</label>
+            <input
+              id="ei-name"
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="ex: Site Brasil"
+              className={inputClass}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-white/40 uppercase tracking-widest" htmlFor="ei-url">URL</label>
+            <input
+              id="ei-url"
+              type="url"
+              required
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://site.com"
+              className={inputClass}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-white/40 uppercase tracking-widest" htmlFor="ei-key">
+              API Key{isEdit && <span className="normal-case text-white/20 font-normal ml-1">(vazio = manter atual)</span>}
+            </label>
+            <input
+              id="ei-key"
+              type="password"
+              required={!isEdit}
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder={isEdit ? '••••••••' : 'Chave configurada no config.php'}
+              className={inputClass}
+            />
+          </div>
+
+          {isEdit && (
+            <label className="flex items-center gap-3 cursor-pointer select-none">
+              <span className="text-sm text-white/60">Ativa</span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={active}
+                onClick={() => setActive((v) => !v)}
+                className={`relative w-10 h-5 rounded-full transition-colors ${active ? 'bg-brand' : 'bg-white/10'}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${active ? 'translate-x-5' : 'translate-x-0'}`} />
+              </button>
+            </label>
+          )}
+
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-5 py-2.5 bg-brand hover:bg-brand-hover disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors"
+            >
+              {saving ? 'Salvando...' : isEdit ? 'Guardar' : 'Criar'}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-5 py-2.5 text-sm text-white/40 hover:text-white/70 rounded-xl hover:bg-white/[0.05] transition-colors"
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+interface InstancesManagerProps {
+  onClose: () => void;
+}
+
+function InstancesManagerModal({ onClose }: InstancesManagerProps) {
+  const queryClient = useQueryClient();
+  const [editing, setEditing] = useState<EmailServiceInstance | null | 'new'>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const { data: instancesData, isLoading } = useQuery({
+    queryKey: ['email-instances'],
+    queryFn: () => api.adminEmailInstances(),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => api.adminDeleteEmailInstance(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['email-instances'] }),
+    onSettled: () => setDeletingId(null),
+  });
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape' && editing === null) onClose();
+    }
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [onClose, editing]);
+
+  if (editing !== null) {
+    return (
+      <InstanceFormModal
+        instance={editing === 'new' ? null : editing}
+        onClose={() => setEditing(null)}
+      />
+    );
+  }
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        className="bg-surface-1 rounded-2xl border border-white/[0.06] p-6 w-full max-w-lg max-h-[80vh] flex flex-col"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-lg font-bold text-white">Instâncias</h2>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setEditing('new')}
+              className="px-3.5 py-1.5 bg-brand hover:bg-brand-hover text-white text-xs font-semibold rounded-lg transition-colors"
+            >
+              + Nova
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Fechar"
+              className="p-1.5 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/[0.05] transition-colors"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div className="overflow-y-auto flex flex-col gap-2">
+          {isLoading ? (
+            <p className="text-sm text-white/30 py-8 text-center">Carregando...</p>
+          ) : !instancesData?.data.length ? (
+            <p className="text-sm text-white/20 py-8 text-center">Nenhuma instância cadastrada.</p>
+          ) : (
+            instancesData.data.map((inst) => (
+              <div
+                key={inst.id}
+                className="flex items-center justify-between bg-surface-2 border border-white/[0.06] rounded-xl px-4 py-3"
+              >
+                <div className="flex flex-col gap-0.5 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-white truncate">{inst.name}</span>
+                    <span className={`inline-block px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${inst.active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/[0.06] text-white/30'}`}>
+                      {inst.active ? 'ativa' : 'inativa'}
+                    </span>
+                  </div>
+                  <span className="text-xs text-white/30 truncate">{inst.url}</span>
+                </div>
+                <div className="flex items-center gap-1 ml-3 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setEditing(inst)}
+                    className="p-1.5 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/[0.05] transition-colors"
+                    aria-label="Editar"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                      <path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={deletingId === inst.id}
+                    onClick={() => { setDeletingId(inst.id); deleteMutation.mutate(inst.id); }}
+                    className="p-1.5 rounded-lg text-white/30 hover:text-red-400 hover:bg-red-500/[0.08] transition-colors disabled:opacity-40"
+                    aria-label="Remover"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                      <path d="M3 4h10M6 4V2h4v2M5 4l.5 9h5l.5-9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function EmailService() {
   const [instanceId, setInstanceId] = useState<number | ''>('');
   const [tab, setTab] = useState<'logs' | 'users'>('logs');
@@ -62,6 +356,7 @@ export default function EmailService() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [page, setPage] = useState(1);
+  const [showInstancesManager, setShowInstancesManager] = useState(false);
 
   useEffect(() => {
     document.title = 'Serviço de E-mail';
@@ -141,7 +436,16 @@ export default function EmailService() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold text-white">Serviço de E-mail</h1>
+        <button
+          type="button"
+          onClick={() => setShowInstancesManager(true)}
+          className="px-3.5 py-2 bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] text-white/60 hover:text-white/80 text-xs font-semibold rounded-xl transition-colors"
+        >
+          Gerir instâncias
+        </button>
       </div>
+
+      {showInstancesManager && <InstancesManagerModal onClose={() => setShowInstancesManager(false)} />}
 
       <FetchingIndicator isFetching={isFetching && !isLoading} />
 
