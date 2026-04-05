@@ -27,7 +27,6 @@ const BRAND = '#E8552A';
 const RED = '#ef4444';
 const AMBER = '#f59e0b';
 
-const TZ = 'America/Sao_Paulo';
 
 function formatChartDate(dateStr: string) {
   const d = new Date(dateStr + 'T00:00:00');
@@ -619,7 +618,7 @@ export default function EmailService() {
                 ) : (
                   logsData.data.map((log) => (
                     <tr key={log.id} className="hover:bg-white/[0.02] transition-colors">
-                      <td className="py-3 px-4 text-white/40 tabular-nums whitespace-nowrap">{new Date(log.created_at).toLocaleString('pt-PT', { timeZone: TZ })}</td>
+                      <td className="py-3 px-4 text-white/40 tabular-nums whitespace-nowrap">{new Date(log.created_at).toLocaleString('pt-PT')}</td>
                       <td className="py-3 px-4 text-white/50">{log.instance_name}</td>
                       <td className="py-3 px-4 text-white/70">{log.recipient_email}</td>
                       <td className="py-3 px-4 text-white/70">{log.original_email ?? <span className="text-white/20">—</span>}</td>
@@ -663,8 +662,8 @@ export default function EmailService() {
                       <td className="py-3 px-4">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${USER_STATUS_STYLES[user.status]}`}>{user.status}</span>
                       </td>
-                      <td className="py-3 px-4 text-white/40 tabular-nums whitespace-nowrap">{new Date(user.created_at).toLocaleString('pt-PT', { timeZone: TZ })}</td>
-                      <td className="py-3 px-4 text-white/40 tabular-nums whitespace-nowrap">{user.first_login_at ? new Date(user.first_login_at).toLocaleString('pt-PT', { timeZone: TZ }) : '—'}</td>
+                      <td className="py-3 px-4 text-white/40 tabular-nums whitespace-nowrap">{new Date(user.created_at).toLocaleString('pt-PT')}</td>
+                      <td className="py-3 px-4 text-white/40 tabular-nums whitespace-nowrap">{user.first_login_at ? new Date(user.first_login_at).toLocaleString('pt-PT') : '—'}</td>
                       <td className="py-3 px-4">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${DOC_STATUS_STYLES[user.doc_status]}`}>{user.doc_status}</span>
                       </td>
