@@ -627,7 +627,9 @@ export default function EmailService() {
                       </td>
                       <td className="py-3 px-4">
                         {log.original_email != null ? (
-                          <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400">sim</span>
+                          <span className="inline-block px-2 py-0.5 rounded-lg text-xs font-mono bg-amber-500/10 text-amber-400" title={log.original_email}>
+                            {log.original_email}
+                          </span>
                         ) : (
                           <span className="text-white/20">—</span>
                         )}
