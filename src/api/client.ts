@@ -189,6 +189,65 @@ export interface CreateUserLinkPayload {
 }
 export type UpdateUserLinkPayload = Partial<Pick<CreateUserLinkPayload, 'label' | 'external_url' | 'file_path'>>;
 
+// Email Service
+export interface EmailServiceInstance {
+  id: number;
+  name: string;
+  url: string;
+  active: boolean;
+  created_at: string;
+}
+
+export interface EmailServiceInstancesResponse {
+  data: EmailServiceInstance[];
+}
+
+export interface EmailLog {
+  id: number;
+  recipient_email: string;
+  recipient_name: string | null;
+  original_email: string | null;
+  subject: string | null;
+  smtp_account: string;
+  smtp_account_index: number;
+  status: 'success' | 'failed';
+  error_message: string | null;
+  order_id: string | null;
+  product_name: string | null;
+  source: string;
+  instance_name: string;
+  created_at: string;
+}
+
+export interface EmailLogsResponse {
+  data: EmailLog[];
+  meta: { total: number; page: number; per_page: number; pages: number };
+}
+
+export interface EmailStats {
+  total: number;
+  failures: number;
+  success_rate: number;
+  corrections: number;
+  chart: { date: string; sent: number; failed: number; corrections: number }[];
+}
+
+export interface WalletUser {
+  id: number;
+  email: string;
+  name: string | null;
+  product_name: string | null;
+  created_at: string;
+  status: 'active' | 'inactive';
+  first_login_at: string | null;
+  doc_status: 'pending' | 'under_review' | 'rejected';
+}
+
+export interface WalletUsersResponse {
+  data: WalletUser[];
+  meta: { total: number; page: number; per_page: number; pages: number };
+}
+
 export interface Transaction {
   transaction_id: string;
   amount: number;
@@ -492,6 +551,53 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+
+  // Admin — Email Service (Instances CRUD)
+  adminEmailInstances: () =>
+    request<EmailServiceInstancesResponse>('/api/admin/email-instances'),
+
+  adminCreateEmailInstance: (payload: { name: string; url: string; api_key: string }) =>
+    request<{ data: EmailServiceInstance }>('/api/admin/email-instances', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  adminUpdateEmailInstance: (id: number, payload: Partial<{ name: string; url: string; api_key: string; active: boolean }>) =>
+    request<{ data: EmailServiceInstance }>(`/api/admin/email-instances/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+
+  adminDeleteEmailInstance: (id: number) =>
+    request<{ message: string }>(`/api/admin/email-instances/${id}`, { method: 'DELETE' }),
+
+  // Admin — Email Service (Proxy)
+  adminEmailLogs: (params: { instance_id?: number; status?: string; date_from?: string; date_to?: string; email?: string; page?: number } = {}) => {
+    const qs = new URLSearchParams(
+      Object.fromEntries(
+        Object.entries(params).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)])
+      )
+    ).toString();
+    return request<EmailLogsResponse>(`/api/admin/email-service/logs?${qs}`);
+  },
+
+  adminEmailStats: (params: { instance_id?: number; date_from?: string; date_to?: string } = {}) => {
+    const qs = new URLSearchParams(
+      Object.fromEntries(
+        Object.entries(params).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)])
+      )
+    ).toString();
+    return request<{ data: EmailStats }>(`/api/admin/email-service/stats?${qs}`);
+  },
+
+  adminWalletUsers: (params: { instance_id: number; status?: string; email?: string; page?: number }) => {
+    const qs = new URLSearchParams(
+      Object.fromEntries(
+        Object.entries(params).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)])
+      )
+    ).toString();
+    return request<WalletUsersResponse>(`/api/admin/email-service/users?${qs}`);
+  },
 
   // Admin — Webhook logs
   adminWebhookLogs: (params: { event?: string; status?: string; shop_slug?: string; date_from?: string; date_to?: string; page?: number } = {}) => {
