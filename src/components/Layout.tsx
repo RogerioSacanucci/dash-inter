@@ -14,6 +14,7 @@ import linkIcon from "../icons/link.json";
 import settingsIcon from "../icons/settings.json";
 import logoutIcon from "../icons/logout.json";
 import menuIcon from "../icons/menu.json";
+import emailIcon from "../icons/email.json";
 
 const NAV_ICON_SIZE = 18;
 const NAV_COLOR_ACTIVE = "#E8552A";
