@@ -602,7 +602,7 @@ export default function EmailService() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/[0.06]">
-                  {['Data', 'Instância', 'Destinatário', 'Assunto', 'Conta SMTP', 'Status', 'Corrigido', 'Erro'].map((h) => (
+                  {['Data', 'Instância', 'Destinatário', 'Corrigido', 'Assunto', 'Conta SMTP', 'Status', 'Erro'].map((h) => (
                     <th key={h} className="text-left py-3 px-4 text-[11px] font-semibold text-white/30 uppercase tracking-widest whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -620,19 +620,11 @@ export default function EmailService() {
                       <td className="py-3 px-4 text-white/40 tabular-nums whitespace-nowrap">{new Date(log.created_at).toLocaleString('pt-PT')}</td>
                       <td className="py-3 px-4 text-white/50">{log.instance_name}</td>
                       <td className="py-3 px-4 text-white/70">{log.recipient_email}</td>
+                      <td className="py-3 px-4 text-white/70">{log.original_email ?? <span className="text-white/20">—</span>}</td>
                       <td className="py-3 px-4 text-white/50 max-w-[200px] truncate">{log.subject ?? '—'}</td>
                       <td className="py-3 px-4 text-white/50 text-xs font-mono">{log.smtp_account}</td>
                       <td className="py-3 px-4">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${LOG_STATUS_STYLES[log.status]}`}>{log.status}</span>
-                      </td>
-                      <td className="py-3 px-4">
-                        {log.original_email != null ? (
-                          <span className="inline-block px-2 py-0.5 rounded-lg text-xs font-mono bg-amber-500/10 text-amber-400" title={log.original_email}>
-                            {log.original_email}
-                          </span>
-                        ) : (
-                          <span className="text-white/20">—</span>
-                        )}
                       </td>
                       <td className="py-3 px-4 text-white/30 text-xs max-w-[200px] truncate">{log.error_message ?? '—'}</td>
                     </tr>
