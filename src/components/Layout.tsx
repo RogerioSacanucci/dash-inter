@@ -143,6 +143,9 @@ export default function Layout() {
               {isAdmin && (
                 <NavItem to="/admin/webhook-logs" label="Webhook Logs" end={false} icon={scrollTextIcon} onClick={closeSidebar} />
               )}
+              {isAdmin && (
+                <NavItem to="/admin/email-service" label="E-mail Service" end={false} icon={emailIcon} onClick={closeSidebar} />
+              )}
             </div>
           )}
 

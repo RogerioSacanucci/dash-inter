@@ -13,6 +13,7 @@ import LinkEditor from './pages/LinkEditor';
 import CartpandaShops from './pages/admin/CartpandaShops';
 import CartpandaShopDetail from './pages/admin/CartpandaShopDetail';
 import WebhookLogs from './pages/admin/WebhookLogs';
+import EmailService from './pages/admin/EmailService';
 import Layout from './components/Layout';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -51,6 +52,7 @@ export default function App() {
           <Route path="admin/internacional-shops" element={<AdminGuard><CartpandaShops /></AdminGuard>} />
           <Route path="admin/internacional-shops/:id" element={<AdminGuard><CartpandaShopDetail /></AdminGuard>} />
           <Route path="admin/webhook-logs" element={<AdminGuard><WebhookLogs /></AdminGuard>} />
+          <Route path="admin/email-service" element={<AdminGuard><EmailService /></AdminGuard>} />
         </Route>
         <Route
           path="/links/:id/edit"
