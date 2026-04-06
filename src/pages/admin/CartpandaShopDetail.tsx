@@ -6,6 +6,7 @@ import DateRangeFilter from '../../components/DateRangeFilter';
 import { FetchingIndicator } from '../../components/ui/FetchingIndicator';
 import { SkeletonMetricCells, SkeletonChart, SkeletonTableRows } from '../../components/ui/Skeleton';
 import { getStoredUtcOffset } from '../../utils/dates';
+import { EmptyState, EmptyIcons } from '../../components/ui/EmptyState';
 import Chart from '../../components/Chart';
 
 interface Metric {
@@ -128,7 +129,7 @@ export default function CartpandaShopDetail() {
       {isLoading ? (
         <>
           <SkeletonMetricCells />
-          <div className="bg-surface-1 rounded-2xl border border-white/[0.06] p-6">
+          <div className="bg-surface-1 rounded-2xl p-6">
             <SkeletonChart />
           </div>
           <div className="bg-surface-1 rounded-2xl border border-white/[0.06]">
@@ -154,7 +155,7 @@ export default function CartpandaShopDetail() {
       ) : data ? (
         <>
           {/* Stats cards */}
-          <div className="bg-surface-1 rounded-2xl border border-white/[0.06] px-6 py-5">
+          <div className="bg-surface-1 rounded-2xl px-6 py-5">
             <div className="hidden sm:flex items-start divide-x divide-white/[0.06]">
               {metrics.map((m, i) => (
                 <MetricCell key={m.label} {...m} index={i} />
@@ -168,7 +169,7 @@ export default function CartpandaShopDetail() {
           </div>
 
           {/* Chart */}
-          <div className="bg-surface-1 rounded-2xl border border-white/[0.06] p-6">
+          <div className="bg-surface-1 rounded-2xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-white">
                 {data.hourly ? 'Pedidos por Hora' : 'Volume de Pedidos'}
@@ -209,8 +210,8 @@ export default function CartpandaShopDetail() {
                 <tbody>
                   {data.users.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-4 py-12 text-center text-white/30 text-sm">
-                        Nenhum usuário encontrado para o período selecionado.
+                      <td colSpan={6}>
+                        <EmptyState icon={EmptyIcons.user} message="Nenhum usuário encontrado" hint="Tente ajustar o período" />
                       </td>
                     </tr>
                   ) : (

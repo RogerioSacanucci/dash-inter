@@ -1,11 +1,14 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { EmptyState, EmptyIcons } from '../../components/ui/EmptyState';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import { api, EmailServiceInstance } from '../../api/client';
 import { FetchingIndicator } from '../../components/ui/FetchingIndicator';
 import { SkeletonTableRows } from '../../components/ui/Skeleton';
+import DateRangeFilter from '../../components/DateRangeFilter';
+import { getStoredUtcOffset, periodToDates } from '../../utils/dates';
 
 const LOG_STATUS_STYLES: Record<string, string> = {
   success: 'bg-emerald-500/10 text-emerald-400',
@@ -301,7 +304,7 @@ function InstancesManagerModal({ onClose }: InstancesManagerProps) {
           {isLoading ? (
             <p className="text-sm text-white/30 py-8 text-center">Carregando...</p>
           ) : !instancesData?.data.length ? (
-            <p className="text-sm text-white/20 py-8 text-center">Nenhuma instância cadastrada.</p>
+            <EmptyState icon={EmptyIcons.instance} message="Nenhuma instância cadastrada" hint="Adicione uma instância para começar" />
           ) : (
             instancesData.data.map((inst) => (
               <div
@@ -354,8 +357,10 @@ export default function EmailService() {
   const [tab, setTab] = useState<'logs' | 'users'>('logs');
   const [status, setStatus] = useState('');
   const [email, setEmail] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  const [utcOffset, setUtcOffset] = useState(getStoredUtcOffset);
+  const [period, setPeriod] = useState('today');
+  const [dateFrom, setDateFrom] = useState(() => periodToDates('today', getStoredUtcOffset()).from);
+  const [dateTo, setDateTo] = useState(() => periodToDates('today', getStoredUtcOffset()).to);
   const [page, setPage] = useState(1);
   const [showInstancesManager, setShowInstancesManager] = useState(false);
 
@@ -375,6 +380,7 @@ export default function EmailService() {
       date_from: dateFrom || undefined,
       date_to: dateTo || undefined,
     }),
+    placeholderData: keepPreviousData,
   });
 
   const {
@@ -394,6 +400,7 @@ export default function EmailService() {
       page,
     }),
     enabled: tab === 'logs',
+    placeholderData: keepPreviousData,
   });
 
   const {
@@ -436,7 +443,7 @@ export default function EmailService() {
     <div className="flex flex-col gap-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-white">Serviço de E-mail</h1>
+        <h1 className="text-xl font-bold text-white">Serviço de E-mail</h1>
         <button
           type="button"
           onClick={() => setShowInstancesManager(true)}
@@ -451,56 +458,54 @@ export default function EmailService() {
       <FetchingIndicator isFetching={isFetching && !isLoading} />
 
       {/* Instance + Date filters */}
-      <div className="bg-surface-1 border border-white/[0.06] rounded-2xl px-5 py-4 flex flex-wrap gap-3 items-end">
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-semibold text-white/40 uppercase tracking-widest">Instância</label>
-          <select
-            value={instanceId}
-            onChange={(e) => { setInstanceId(e.target.value ? Number(e.target.value) : ''); setPage(1); }}
-            className={inputCls}
-          >
-            <option value="">Todas as instâncias</option>
-            {instancesData?.data.map((inst) => (
-              <option key={inst.id} value={inst.id}>{inst.name}</option>
-            ))}
-          </select>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-semibold text-white/40 uppercase tracking-widest">De</label>
-          <input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }} className={inputCls} />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-semibold text-white/40 uppercase tracking-widest">Até</label>
-          <input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPage(1); }} className={inputCls} />
-        </div>
+      <div className="bg-surface-1 rounded-2xl px-5 py-3.5 flex flex-wrap gap-2 items-center">
+        <select
+          aria-label="Instância"
+          value={instanceId}
+          onChange={(e) => { setInstanceId(e.target.value ? Number(e.target.value) : ''); setPage(1); }}
+          className={inputCls}
+        >
+          <option value="">Todas as instâncias</option>
+          {instancesData?.data.map((inst) => (
+            <option key={inst.id} value={inst.id}>{inst.name}</option>
+          ))}
+        </select>
+        <div className="flex-1" />
+        <DateRangeFilter
+          period={period}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          utcOffset={utcOffset}
+          onPeriodChange={(p, from, to) => { setPeriod(p); setDateFrom(from); setDateTo(to); setPage(1); }}
+          onCustomDatesChange={(from, to) => { setDateFrom(from); setDateTo(to); }}
+          onUtcOffsetChange={setUtcOffset}
+        />
       </div>
 
       {/* Metric Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-surface-1 border border-white/[0.06] rounded-2xl px-5 py-4">
+        <div className="bg-surface-1 rounded-2xl px-5 py-4">
           <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest mb-1">Enviados</p>
           <p className="text-2xl font-bold text-white tabular-nums">{stats?.total ?? '—'}</p>
         </div>
-        <div className="bg-surface-1 border border-white/[0.06] rounded-2xl px-5 py-4">
+        <div className="bg-surface-1 rounded-2xl px-5 py-4">
           <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest mb-1">Falhas</p>
           <p className="text-2xl font-bold text-red-400 tabular-nums">{stats?.failures ?? '—'}</p>
         </div>
-        <div className="bg-surface-1 border border-white/[0.06] rounded-2xl px-5 py-4">
+        <div className="bg-surface-1 rounded-2xl px-5 py-4">
           <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest mb-1">Taxa de Sucesso</p>
           <p className="text-2xl font-bold text-white tabular-nums">{stats ? `${stats.success_rate}%` : '—'}</p>
         </div>
-        <div className="bg-surface-1 border border-white/[0.06] rounded-2xl px-5 py-4">
+        <div className="bg-surface-1 rounded-2xl px-5 py-4">
           <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest mb-1">Correções</p>
           <p className="text-2xl font-bold text-amber-400 tabular-nums">{stats?.corrections ?? '—'}</p>
         </div>
       </div>
 
       {/* Chart */}
-      <div className="bg-surface-1 border border-white/[0.06] rounded-2xl p-5">
+      <div className="bg-surface-1 rounded-2xl p-5">
         {!chart.length ? (
-          <div className="flex items-center justify-center h-48 text-white/20 text-sm">
-            Sem dados para o período selecionado
-          </div>
+          <EmptyState icon={EmptyIcons.chart} message="Sem dados para o período" hint="Tente alargar o período de datas" />
         ) : (
           <ResponsiveContainer width="100%" height={240}>
             <AreaChart data={chart} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
@@ -551,7 +556,7 @@ export default function EmailService() {
       </div>
 
       {/* Tab filters */}
-      <div className="bg-surface-1 border border-white/[0.06] rounded-2xl px-5 py-4 flex flex-wrap gap-3 items-end">
+      <div className="bg-surface-1 rounded-2xl px-5 py-4 flex flex-wrap gap-3 items-end">
         <div className="flex flex-col gap-1.5">
           <label className="text-[11px] font-semibold text-white/40 uppercase tracking-widest">Status</label>
           <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className={inputCls}>
@@ -597,7 +602,7 @@ export default function EmailService() {
       )}
 
       {/* Table */}
-      <div className="bg-surface-1 border border-white/[0.06] rounded-2xl overflow-hidden">
+      <div className="bg-surface-1 rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           {tab === 'logs' ? (
             <table className="w-full text-sm">
@@ -613,7 +618,9 @@ export default function EmailService() {
                   <SkeletonTableRows rows={8} cols={[18, 14, 18, 16, 12, 10, 10, 16]} />
                 ) : !logsData?.data.length ? (
                   <tr>
-                    <td colSpan={8} className="py-12 text-center text-white/20 text-sm">Nenhum log encontrado</td>
+                    <td colSpan={8}>
+                      <EmptyState icon={EmptyIcons.log} message="Nenhum log encontrado" hint="Tente ajustar os filtros" />
+                    </td>
                   </tr>
                 ) : (
                   logsData.data.map((log) => (
@@ -634,9 +641,7 @@ export default function EmailService() {
               </tbody>
             </table>
           ) : !instanceId ? (
-            <div className="py-12 text-center text-white/20 text-sm">
-              Selecione uma instância para ver os usuários do wallet.
-            </div>
+            <EmptyState icon={EmptyIcons.instance} message="Nenhuma instância selecionada" hint="Selecione uma instância para ver os utilizadores" />
           ) : (
             <table className="w-full text-sm">
               <thead>
@@ -651,7 +656,9 @@ export default function EmailService() {
                   <SkeletonTableRows rows={8} cols={[20, 16, 16, 12, 16, 16, 14]} />
                 ) : !usersData?.data.length ? (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center text-white/20 text-sm">Nenhum usuário encontrado</td>
+                    <td colSpan={7}>
+                      <EmptyState icon={EmptyIcons.user} message="Nenhum usuário encontrado" hint="Tente ajustar os filtros" />
+                    </td>
                   </tr>
                 ) : (
                   usersData.data.map((user) => (

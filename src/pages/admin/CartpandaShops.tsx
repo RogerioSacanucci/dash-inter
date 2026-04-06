@@ -5,6 +5,7 @@ import { api, AdminCartpandaShopsResponse } from '../../api/client';
 import DateRangeFilter from '../../components/DateRangeFilter';
 import { FetchingIndicator } from '../../components/ui/FetchingIndicator';
 import { getStoredUtcOffset } from '../../utils/dates';
+import { EmptyState, EmptyIcons } from '../../components/ui/EmptyState';
 
 function formatVolume(value: number): string {
   return value.toLocaleString('en-US', {
@@ -64,7 +65,7 @@ export default function CartpandaShops() {
       </div>
 
       {/* Table */}
-      <div className="bg-surface-1 rounded-2xl border border-white/[0.06]">
+      <div className="bg-surface-1 rounded-2xl">
         <FetchingIndicator isFetching={isFetching && !isLoading} />
         {error ? (
           <div className="p-6 text-sm text-red-400 flex items-center justify-between gap-4">
@@ -103,8 +104,8 @@ export default function CartpandaShops() {
                   ))
                 ) : shops.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-12 text-center text-white/30 text-sm">
-                      Nenhuma loja encontrada para o período selecionado.
+                    <td colSpan={6}>
+                      <EmptyState icon={EmptyIcons.store} message="Nenhuma loja encontrada" hint="Tente ajustar o período" />
                     </td>
                   </tr>
                 ) : (

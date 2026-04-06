@@ -128,7 +128,7 @@ export function SkeletonChart() {
 
 export function SkeletonMetricCells() {
   return (
-    <div className="bg-surface-1 rounded-2xl border border-white/[0.06] px-6 py-5">
+    <div className="bg-surface-1 rounded-2xl px-6 py-5">
       {/* Desktop */}
       <div className="hidden sm:flex items-start divide-x divide-white/[0.06]">
         {Array.from({ length: 3 }).map((_, i) => (

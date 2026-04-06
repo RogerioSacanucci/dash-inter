@@ -1,4 +1,5 @@
 import { CartpandaOrder } from '../api/client';
+import { EmptyState, EmptyIcons } from './ui/EmptyState';
 
 const STATUS_CLASSES: Record<string, string> = {
   COMPLETED: 'bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20',
@@ -22,11 +23,7 @@ interface Props {
 
 export default function CartpandaOrderTable({ orders }: Props) {
   if (!orders.length) {
-    return (
-      <div className="flex justify-center py-16 text-white/20 text-sm">
-        Nenhum pedido encontrado
-      </div>
-    );
+    return <EmptyState icon={EmptyIcons.order} message="Nenhum pedido encontrado" hint="Tente ajustar os filtros ou o período" />;
   }
 
   return (

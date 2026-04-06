@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { api, StatsResponse, CartpandaStatsResponse } from '../api/client';
 
 export type Platform = 'waymb' | 'cartpanda';
@@ -46,6 +46,7 @@ export function useDashboardStats({
         utcOffset,
       ),
     enabled: isWayMb && canFetch,
+    placeholderData: keepPreviousData,
   });
 
   const cpStatsQuery = useQuery<CartpandaStatsResponse>({
@@ -59,6 +60,7 @@ export function useDashboardStats({
         utcOffset,
       ),
     enabled: !isWayMb && canFetch,
+    placeholderData: keepPreviousData,
   });
 
   const activeQuery = isWayMb ? statsQuery : cpStatsQuery;

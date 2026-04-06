@@ -7,6 +7,7 @@ import Tabs, { Tab } from '../components/Tabs';
 import UserManagement from '../components/UserManagement';
 import AaPanelConfigManager from '../components/admin/AaPanelConfigManager';
 import UserLinkManager from '../components/admin/UserLinkManager';
+import { EmptyState, EmptyIcons } from '../components/ui/EmptyState';
 
 const TABS: Tab[] = [
   { key: 'notifications', label: 'Notificações' },
@@ -94,7 +95,7 @@ export default function Settings() {
       {activeTab === 'notifications' && (
         <div className="flex gap-4 flex-wrap">
           {/* Add URL card */}
-          <div className="bg-surface-1 rounded-2xl border border-white/[0.06] p-6 w-full max-w-sm">
+          <div className="bg-surface-1 rounded-2xl p-6 w-full max-w-sm">
             <h2 className="font-semibold text-white mb-1">Pushcut</h2>
             <p className="text-sm text-white/40 mb-6">
               Adicione URLs para receber notificações de pagamentos criados ou confirmados.
@@ -170,7 +171,7 @@ export default function Settings() {
           </div>
 
           {/* URL list card */}
-          <div className="bg-surface-1 rounded-2xl border border-white/[0.06] p-6 flex-1 min-w-[260px]">
+          <div className="bg-surface-1 rounded-2xl p-6 flex-1 min-w-[260px]">
             <h2 className="font-semibold text-white mb-1">URLs cadastradas</h2>
             <p className="text-sm text-white/40 mb-6">
               Cada URL recebe notificações de acordo com a sua preferência.
@@ -179,7 +180,7 @@ export default function Settings() {
             {listLoading ? (
               <div className="text-sm text-white/20">Carregando...</div>
             ) : urls.length === 0 ? (
-              <div className="text-sm text-white/20">Nenhuma URL cadastrada.</div>
+              <EmptyState icon={EmptyIcons.notification} message="Nenhuma URL cadastrada" hint="Adicione uma URL para receber notificações" />
             ) : (
               <div className="flex flex-col gap-2">
                 {urls.map((dest) => (

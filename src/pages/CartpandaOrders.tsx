@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { api } from '../api/client';
 import { useAuth } from '../hooks/useAuth';
 import CartpandaOrderTable from '../components/CartpandaOrderTable';
@@ -54,6 +54,7 @@ export default function CartpandaOrders() {
   const ordersQuery = useQuery({
     queryKey: ['cartpanda-orders', orderParams],
     queryFn: () => api.cartpandaOrders(orderParams),
+    placeholderData: keepPreviousData,
   });
 
   const statsQuery = useQuery({
@@ -67,6 +68,7 @@ export default function CartpandaOrders() {
         utcOffset,
       ),
     throwOnError: false,
+    placeholderData: keepPreviousData,
   });
 
   function handleFilter(e: React.FormEvent) {
@@ -176,7 +178,7 @@ export default function CartpandaOrders() {
       )}
 
       {/* Table */}
-      <div className="bg-surface-1 rounded-2xl border border-white/[0.06]">
+      <div className="bg-surface-1 rounded-2xl">
         {ordersQuery.error ? (
           <div className="p-6 text-sm text-red-400 flex items-center justify-between gap-4">
             <span>{ordersQuery.error.message}</span>

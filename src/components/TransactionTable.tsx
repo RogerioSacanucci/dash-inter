@@ -1,5 +1,6 @@
 import { Transaction } from '../api/client';
 import { SkeletonTableRows } from './ui/Skeleton';
+import { EmptyState, EmptyIcons } from './ui/EmptyState';
 
 const STATUS_CLASSES: Record<string, string> = {
   COMPLETED: 'bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20',
@@ -50,11 +51,7 @@ export default function TransactionTable({ transactions, loading }: Props) {
   }
 
   if (!transactions.length) {
-    return (
-      <div className="flex justify-center py-16 text-white/20 text-sm">
-        Nenhuma transação encontrada
-      </div>
-    );
+    return <EmptyState icon={EmptyIcons.transaction} message="Nenhuma transação encontrada" hint="Tente ajustar os filtros ou o período" />;
   }
 
   return (

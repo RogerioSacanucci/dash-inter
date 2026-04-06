@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { api } from '../api/client';
 import { useAuth } from '../hooks/useAuth';
 import { FetchingIndicator } from '../components/ui/FetchingIndicator';
@@ -57,6 +57,7 @@ export default function Transactions() {
   const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: ['transactions', params],
     queryFn: () => api.transactions(params),
+    placeholderData: keepPreviousData,
   });
 
   function handleFilter(e: React.FormEvent) {

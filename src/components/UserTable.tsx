@@ -1,4 +1,5 @@
 import { AdminUser } from '../api/client';
+import { EmptyState, EmptyIcons } from './ui/EmptyState';
 
 function formatBalance(value: string): string {
   const num = parseFloat(value ?? '0');
@@ -26,11 +27,7 @@ export default function UserTable({ users, loading, currentUserId, onEdit, onTog
   }
 
   if (!users.length) {
-    return (
-      <div className="flex justify-center py-16 text-white/20 text-sm">
-        Nenhum utilizador encontrado
-      </div>
-    );
+    return <EmptyState icon={EmptyIcons.user} message="Nenhum utilizador encontrado" />;
   }
 
   return (
@@ -96,7 +93,7 @@ export default function UserTable({ users, loading, currentUserId, onEdit, onTog
                     <button
                       type="button"
                       onClick={() => onViewBalance(user)}
-                      className="text-sm text-white/40 hover:text-brand transition-colors"
+                      className="text-sm text-white/40 hover:text-white/70 transition-colors"
                     >
                       Saldo
                     </button>

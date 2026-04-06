@@ -1,6 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { queryClient } from './lib/queryClient';
 import { useAuth } from './hooks/useAuth';
 import Login from './pages/Login';
@@ -16,16 +17,48 @@ import WebhookLogs from './pages/admin/WebhookLogs';
 import EmailService from './pages/admin/EmailService';
 import Layout from './components/Layout';
 
+const LOADER_EXIT_MS = 300;
+
+function BrandedLoader({ exiting }: { exiting: boolean }) {
+  return (
+    <div
+      className="min-h-screen bg-canvas flex items-center justify-center transition-opacity"
+      style={{ transitionDuration: `${LOADER_EXIT_MS}ms`, opacity: exiting ? 0 : 1 }}
+    >
+      <img src="/logo.png" alt="" aria-hidden="true" className="h-10 w-auto animate-fade-in" />
+    </div>
+  );
+}
+
+function useLoader(loading: boolean) {
+  const [exiting, setExiting] = useState(false);
+  const [gone, setGone] = useState(false);
+
+  useEffect(() => {
+    if (!loading && !gone) {
+      setExiting(true);
+      const t = setTimeout(() => setGone(true), LOADER_EXIT_MS);
+      return () => clearTimeout(t);
+    }
+  }, [loading]);
+
+  return { showLoader: !gone || loading, exiting };
+}
+
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  if (loading) return <div className="flex items-center justify-center min-h-screen bg-canvas text-white/20">Carregando...</div>;
+  const { showLoader, exiting } = useLoader(loading);
+
+  if (showLoader) return <BrandedLoader exiting={exiting} />;
   if (!user) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  if (loading) return null;
+  const { showLoader, exiting } = useLoader(loading);
+
+  if (showLoader) return <BrandedLoader exiting={exiting} />;
   if (user?.role !== 'admin') return <Navigate to="/" replace />;
   return <>{children}</>;
 }

@@ -7,6 +7,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { EmptyState, EmptyIcons } from './ui/EmptyState';
 
 const BRAND  = '#E8552A';
 const INDIGO = '#6366f1';
@@ -42,7 +43,7 @@ function CustomTooltip({ active, payload, label, hourly, secondaryLabel, currenc
       <p className="font-semibold text-white/60 mb-2 text-xs uppercase tracking-wide">
         {hourly ? label : formatDate(label)}
       </p>
-      <p className="text-brand font-bold">
+      <p className="text-white font-bold">
         {isCount ? primaryValue : `${currencySymbol} ${primaryValue.toFixed(2).replace('.', ',')}`}
       </p>
       {showSecondary && <p className="text-white/40 text-xs mt-0.5">{payload[1]?.value ?? 0} {secondaryLabel}</p>}
@@ -52,11 +53,7 @@ function CustomTooltip({ active, payload, label, hourly, secondaryLabel, currenc
 
 export default function Chart({ data, hourly = false, secondaryLabel = 'transações', currencySymbol = '€', showSecondary = true, dataKey = 'volume' }: Props) {
   if (!data.length) {
-    return (
-      <div className="flex items-center justify-center h-48 text-white/20 text-sm">
-        Sem dados para o período selecionado
-      </div>
-    );
+    return <EmptyState icon={EmptyIcons.chart} message="Sem dados para o período" hint="Tente alargar o período de datas" />;
   }
 
   const xKey = hourly ? 'hour' : 'date';
@@ -67,7 +64,7 @@ export default function Chart({ data, hourly = false, secondaryLabel = 'transaç
 
   return (
     <div role="img" aria-label={ariaLabel}>
-      <ResponsiveContainer width="100%" height={240}>
+      <ResponsiveContainer width="100%" height={200}>
         <AreaChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="volGrad" x1="0" y1="0" x2="0" y2="1">
@@ -79,12 +76,12 @@ export default function Chart({ data, hourly = false, secondaryLabel = 'transaç
           <XAxis
             dataKey={xKey}
             tickFormatter={hourly ? (v) => v : formatDate}
-            tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.25)', fontFamily: 'Plus Jakarta Sans' }}
+            tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.25)' }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
-            tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.25)', fontFamily: 'Plus Jakarta Sans' }}
+            tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.25)' }}
             axisLine={false}
             tickLine={false}
             tickFormatter={(v) => isCount ? String(v) : `${currencySymbol}${v}`}

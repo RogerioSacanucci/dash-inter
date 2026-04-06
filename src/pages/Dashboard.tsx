@@ -11,6 +11,7 @@ import { useDashboardStats } from '../hooks/useDashboardStats';
 import StatsCards from '../components/StatsCards';
 import Chart from '../components/Chart';
 import ShopBalancesCard from '../components/ShopBalancesCard';
+import OrdersDonutChart from '../components/OrdersDonutChart';
 import { SkeletonStatsCards, SkeletonCartpandaStats, SkeletonChart } from '../components/ui/Skeleton';
 import { FetchingIndicator } from '../components/ui/FetchingIndicator';
 
@@ -68,7 +69,7 @@ export default function Dashboard() {
     <div className="flex flex-col gap-5">
       {/* Page header */}
       <div>
-        <h1 className="text-lg font-semibold text-white">Dashboard</h1>
+        <h1 className="text-xl font-bold text-white">Dashboard</h1>
         {isAdmin && (
           <p className="text-sm text-white/40 mt-0.5">
             {selectedAccount
@@ -233,22 +234,13 @@ export default function Dashboard() {
 
           {/* Volume chart */}
           <div className="bg-surface-1 rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-white">
-                {stats.hourly ? 'Transações por Hora' : 'Volume de Pagamentos'}
-              </h2>
-              <div className="flex items-center gap-4 text-xs text-white/30">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-0.5 bg-brand inline-block rounded" />
-                  Volume (€)
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-0 inline-block border-t-2 border-dashed border-indigo-400" />
-                  Transações
-                </span>
-              </div>
-            </div>
-            <Chart data={stats.chart} hourly={stats.hourly} />
+            <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest mb-1">
+              {stats.hourly ? 'Transações por Hora' : 'Volume de Pagamentos'}
+            </p>
+            <p key={`${dateFrom}-${dateTo}`} className="text-3xl font-bold text-white tabular-nums mb-5 animate-value-pop">
+              €&nbsp;{stats.overview.total_volume.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+            </p>
+            <Chart data={stats.chart} hourly={stats.hourly} showSecondary={false} />
           </div>
 
           {/* Method breakdown */}
@@ -302,22 +294,24 @@ export default function Dashboard() {
             />
           </div>
 
-          {/* Two mini-cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-surface-1 rounded-2xl p-5">
-              <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest mb-2">Total de pedidos</p>
-              <p className="text-3xl font-bold text-white tabular-nums">{cpStats.overview.total_orders}</p>
-              {cpStats.overview.pending > 0 && (
-                <p className="text-xs text-white/30 mt-1">{cpStats.overview.pending} pendentes</p>
-              )}
+          {/* Donut + balances row */}
+          {shopBalances.length > 1 ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <OrdersDonutChart
+                total={cpStats.overview.total_orders}
+                completed={cpStats.overview.completed}
+              />
+              <ShopBalancesCard shopBalances={shopBalances} />
             </div>
-            <div className="bg-surface-1 rounded-2xl p-5">
-              <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest mb-2">Completos</p>
-              <p className="text-3xl font-bold text-white tabular-nums">{cpStats.overview.completed}</p>
-            </div>
-          </div>
-
-          <ShopBalancesCard shopBalances={shopBalances} />
+          ) : (
+            <>
+              <OrdersDonutChart
+                total={cpStats.overview.total_orders}
+                completed={cpStats.overview.completed}
+              />
+              <ShopBalancesCard shopBalances={shopBalances} />
+            </>
+          )}
         </div>
       ) : null}
     </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLinks } from '../hooks/useLinks';
+import { EmptyState, EmptyIcons } from '../components/ui/EmptyState';
 
 export default function Links() {
   const { links, loading, error } = useLinks();
@@ -31,19 +32,12 @@ export default function Links() {
   }
 
   if (links.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 gap-2">
-        <div className="text-zinc-400 text-sm">Nenhum link configurado</div>
-        <div className="text-zinc-600 text-xs">
-          Peça ao administrador para configurar seus links
-        </div>
-      </div>
-    );
+    return <EmptyState icon={EmptyIcons.link} message="Nenhum link configurado" hint="Peça ao administrador para configurar os seus links" />;
   }
 
   return (
     <div className="p-6 space-y-4">
-      <h1 className="text-xl font-semibold text-white">Meus Links</h1>
+      <h1 className="text-xl font-bold text-white">Meus Links</h1>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {links.map((link) => (
           <div
@@ -58,7 +52,7 @@ export default function Links() {
                 href={link.external_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-zinc-400 text-xs hover:text-brand truncate"
+                className="text-white/40 text-xs hover:text-white/70 truncate"
               >
                 {link.external_url}
               </a>

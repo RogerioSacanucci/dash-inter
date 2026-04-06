@@ -14,7 +14,7 @@ import linkIcon from "../icons/link.json";
 import settingsIcon from "../icons/settings.json";
 import logoutIcon from "../icons/logout.json";
 import menuIcon from "../icons/menu.json";
-import emailIcon from "../icons/email.json";
+import mailIcon from "../icons/mail.json";
 
 const NAV_ICON_SIZE = 18;
 const NAV_COLOR_ACTIVE = "#E8552A";
@@ -22,7 +22,7 @@ const NAV_COLOR_INACTIVE = "rgba(255,255,255,0.45)";
 
 function GroupHeader({ label }: { label: string }) {
   return (
-    <p className="px-3 pt-3 pb-1 text-[9px] font-semibold uppercase tracking-widest text-white/25 select-none">
+    <p className="px-3 pt-4 pb-1 text-[9px] font-semibold uppercase tracking-widest text-white/25 select-none">
       {label}
     </p>
   );
@@ -50,7 +50,7 @@ function NavItem({
       onClick={onClick}
       onMouseEnter={() => playerRef.current?.playFromBeginning()}
       className={({ isActive }) =>
-        `flex items-center gap-2.5 px-3 py-[9px] rounded-[10px] text-[13px] font-medium transition-[color,background-color,transform] duration-[160ms] ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0 ${
+        `flex items-center gap-2.5 px-3 py-[10px] rounded-[10px] text-[13px] font-medium transition-[color,background-color,transform] duration-[160ms] ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0 ${
           isActive
             ? "bg-brand/10 text-brand"
             : "text-white/50 fine-hover:text-white/80 fine-hover:bg-white/[0.04]"
@@ -119,7 +119,7 @@ export default function Layout() {
         {/* Nav */}
         <nav
           aria-label="Navegação principal"
-          className="flex-1 px-3 flex flex-col gap-0.5 overflow-y-auto"
+          className="flex-1 px-3 flex flex-col gap-1 overflow-y-auto"
         >
           <div>
             <GroupHeader label="Geral" />
@@ -127,14 +127,14 @@ export default function Layout() {
           </div>
 
           {hasWayMb && (
-            <div>
+            <div className="mt-2">
               <GroupHeader label="WayMB" />
               <NavItem to="/transactions" label="Transações" end={false} icon={transferIcon} onClick={closeSidebar} />
             </div>
           )}
 
           {hasCartpanda && (
-            <div>
+            <div className="mt-2">
               <GroupHeader label="Internacional" />
               <NavItem to="/internacional-orders" label="Pedidos" end={false} icon={shoppingCartIcon} onClick={closeSidebar} />
               {isAdmin && (
@@ -144,24 +144,24 @@ export default function Layout() {
                 <NavItem to="/admin/webhook-logs" label="Webhook Logs" end={false} icon={scrollTextIcon} onClick={closeSidebar} />
               )}
               {isAdmin && (
-                <NavItem to="/admin/email-service" label="E-mail Service" end={false} icon={emailIcon} onClick={closeSidebar} />
+                <NavItem to="/admin/email-service" label="E-mail Service" end={false} icon={mailIcon} onClick={closeSidebar} />
               )}
             </div>
           )}
 
-          <div>
+          <div className="mt-2">
             <GroupHeader label="Ferramentas" />
             <NavItem to="/links" label="Links" end={false} icon={linkIcon} onClick={closeSidebar} />
           </div>
         </nav>
 
         {/* Bottom */}
-        <div className="px-3 py-4 shrink-0 flex flex-col gap-0.5">
+        <div className="px-3 pt-6 pb-4 shrink-0 flex flex-col gap-1">
           <NavItem to="/settings" label="Configurações" end={false} icon={settingsIcon} onClick={closeSidebar} />
 
           {/* User pill */}
           <div className="flex items-center gap-2.5 px-3 py-2 mt-2 rounded-[10px] fine-hover:bg-white/[0.04] transition-colors duration-150 cursor-default">
-            <div className="w-[22px] h-[22px] rounded-full bg-brand flex items-center justify-center text-[9px] font-bold text-brand-text shrink-0">
+            <div className="w-6 h-6 rounded-full bg-brand flex items-center justify-center text-[10px] font-bold text-brand-text shrink-0 tracking-wide">
               {initials}
             </div>
             <p className="text-[12px] font-medium text-white/60 truncate flex-1 min-w-0">

@@ -80,7 +80,7 @@ export default function UserManagement() {
         </div>
       )}
 
-      <div className="bg-surface-1 rounded-2xl border border-white/[0.06]">
+      <div className="bg-surface-1 rounded-2xl">
         <UserTable
           users={users}
           loading={isLoading}
