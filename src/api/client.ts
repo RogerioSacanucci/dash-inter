@@ -99,6 +99,37 @@ export interface UserBalanceResponse {
   };
 }
 
+export interface UserPayoutsResponse {
+  balance: {
+    balance_pending: string;
+    balance_reserve: string;
+    balance_released: string;
+    currency: string;
+  };
+  payout_logs: {
+    data: PayoutLog[];
+    meta: { total: number; page: number; per_page: number; pages: number };
+  };
+}
+
+export interface AdminPayoutLogEntry extends PayoutLog {
+  user: { id: number; name: string; email: string };
+}
+
+export interface AdminPayoutsResponse {
+  data: AdminPayoutLogEntry[];
+  meta: { total: number; page: number; per_page: number; pages: number };
+}
+
+export interface AdminPayoutsFilters {
+  user_id?: number;
+  shop_id?: number;
+  type?: 'withdrawal' | 'adjustment';
+  date_from?: string;
+  date_to?: string;
+  page?: number;
+}
+
 export interface PayoutPayload {
   amount: number;
   type: 'withdrawal' | 'adjustment';
@@ -551,6 +582,20 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+
+  getPayouts: (page = 1) =>
+    request<UserPayoutsResponse>(`/api/payouts?page=${page}`),
+
+  adminGetAllPayouts: (filters: AdminPayoutsFilters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.user_id)   params.set('user_id', String(filters.user_id));
+    if (filters.shop_id)   params.set('shop_id', String(filters.shop_id));
+    if (filters.type)      params.set('type', filters.type);
+    if (filters.date_from) params.set('date_from', filters.date_from);
+    if (filters.date_to)   params.set('date_to', filters.date_to);
+    if (filters.page)      params.set('page', String(filters.page));
+    return request<AdminPayoutsResponse>(`/api/admin/payouts?${params.toString()}`);
+  },
 
   // Admin — Email Service (Instances CRUD)
   adminEmailInstances: () =>
