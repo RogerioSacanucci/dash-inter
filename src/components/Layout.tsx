@@ -150,6 +150,11 @@ export default function Layout() {
           )}
 
           <div className="mt-2">
+            <GroupHeader label="Financeiro" />
+            <NavItem to="/saques" label="Saques" end={false} icon={transferIcon} onClick={closeSidebar} />
+          </div>
+
+          <div className="mt-2">
             <GroupHeader label="Ferramentas" />
             <NavItem to="/links" label="Links" end={false} icon={linkIcon} onClick={closeSidebar} />
           </div>
