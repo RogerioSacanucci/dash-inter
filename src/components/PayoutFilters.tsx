@@ -21,13 +21,13 @@ export function PayoutFilters({ filters, shops, onFiltersChange, onClear }: Payo
   return (
     <div className="bg-surface-1 rounded-2xl px-5 py-4 flex flex-wrap gap-3 items-end">
       <div className="flex flex-col gap-1.5">
-        <label className={labelCls}>Email</label>
+        <label className={labelCls}>User ID</label>
         <input
-          type="text"
-          placeholder="Buscar por email..."
-          value={filters.user_id ? String(filters.user_id) : ''}
+          type="number"
+          placeholder="Buscar por ID..."
+          value={filters.user_id ?? ''}
           onChange={(e) => {
-            const val = e.target.value.trim();
+            const val = e.target.value;
             onFiltersChange({ ...filters, user_id: val ? Number(val) : undefined, page: 1 });
           }}
           className={inputCls}
