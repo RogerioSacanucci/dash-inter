@@ -222,7 +222,7 @@ function AdminPayouts() {
                     <th className={thCls}>Usuário</th>
                     <th className={thCls}>Tipo</th>
                     <th className={thCls}>Valor</th>
-                    <th className={thCls}>Loja</th>
+                    <th className={thCls}>Conta</th>
                     <th className={thCls}>Admin</th>
                     <th className={thCls}>Nota</th>
                   </tr>
@@ -253,7 +253,7 @@ function AdminPayouts() {
                         </td>
                         <td className={`${tdCls} tabular-nums font-medium`}>
                           <span className={entry.type === 'withdrawal' ? 'text-red-400' : 'text-emerald-400'}>
-                            {entry.type === 'withdrawal' ? '−' : '+'}{formatCurrency(entry.amount)}
+                            {entry.type === 'withdrawal' ? '−' : '+'}{formatCurrency(Math.abs(Number(entry.amount)))}
                           </span>
                         </td>
                         <td className={tdCls}>{entry.shop_name ?? '—'}</td>
@@ -377,7 +377,7 @@ function UserPayouts() {
                     <th className={thCls}>Data</th>
                     <th className={thCls}>Tipo</th>
                     <th className={thCls}>Valor</th>
-                    <th className={thCls}>Loja</th>
+                    <th className={thCls}>Conta</th>
                     <th className={thCls}>Nota</th>
                   </tr>
                 </thead>
@@ -402,7 +402,7 @@ function UserPayouts() {
                         </td>
                         <td className={`${tdCls} tabular-nums font-medium`}>
                           <span className={entry.type === 'withdrawal' ? 'text-red-400' : 'text-emerald-400'}>
-                            {entry.type === 'withdrawal' ? '−' : '+'}{formatCurrency(entry.amount)}
+                            {entry.type === 'withdrawal' ? '−' : '+'}{formatCurrency(Math.abs(Number(entry.amount)))}
                           </span>
                         </td>
                         <td className={tdCls}>{entry.account_index != null ? `Conta ${entry.account_index}` : '—'}</td>
