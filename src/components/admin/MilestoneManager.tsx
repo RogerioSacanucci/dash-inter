@@ -12,13 +12,13 @@ const EMPTY_FORM: MilestoneForm = { value: '', order: '' };
 const inputClass =
   'w-full bg-surface-1 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-brand';
 
-function formatCurrency(cents: number): string {
-  return new Intl.NumberFormat('pt-PT', {
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'EUR',
+    currency: 'USD',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(cents / 100);
+  }).format(value);
 }
 
 export default function MilestoneManager() {
@@ -64,7 +64,7 @@ export default function MilestoneManager() {
   function startEdit(milestone: AdminMilestone) {
     setEditingId(milestone.id);
     setForm({
-      value: String(milestone.value / 100),
+      value: String(milestone.value),
       order: String(milestone.order),
     });
   }
@@ -77,7 +77,7 @@ export default function MilestoneManager() {
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    const value = Math.round(Number(form.value) * 100);
+    const value = Number(form.value);
     const order = Number(form.order);
     if (!value || !order) return;
 
@@ -89,11 +89,10 @@ export default function MilestoneManager() {
     }
   }
 
-  async function handleUpdate(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleUpdate() {
     if (editingId === null) return;
     setError(null);
-    const value = Math.round(Number(form.value) * 100);
+    const value = Number(form.value);
     const order = Number(form.order);
     if (!value || !order) return;
 
@@ -142,7 +141,7 @@ export default function MilestoneManager() {
         <h3 className="text-sm font-semibold text-white mb-4">Adicionar meta</h3>
         <div className="flex gap-3 items-end">
           <div className="flex-1">
-            <label className="block text-sm text-white/60 mb-1">Valor (EUR)</label>
+            <label className="block text-sm text-white/60 mb-1">Valor (USD)</label>
             <input
               type="number"
               step="0.01"
@@ -201,7 +200,7 @@ export default function MilestoneManager() {
             </thead>
             <tbody className="divide-y divide-white/[0.04]">
               {sorted.map((milestone) => (
-                <tr key={milestone.id} className="fine-hover:bg-white/[0.02]">
+                <tr key={milestone.id} className="hover:bg-white/[0.02]">
                   {editingId === milestone.id ? (
                     <>
                       <td className="py-3 px-5">
