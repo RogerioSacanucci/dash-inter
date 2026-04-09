@@ -57,25 +57,21 @@ export function MilestoneIndicator() {
         <Player
           ref={rankPlayerRef}
           icon={rankIcon}
-          size={18}
+          size={22}
           colorize="#E8552A"
         />
-        <span className="text-[13px] font-semibold text-white/80">
+        <span className="text-[15px] font-semibold text-white/80">
           {formatCurrency(data.total)}
         </span>
-        {/* Progress bar with next milestone label */}
-        <div className="flex items-center gap-1.5">
-          <div className="w-24 h-[3px] rounded-full bg-white/10 overflow-hidden">
-            <div
-              className="h-full rounded-full bg-brand transition-all duration-500"
-              style={{ width: `${progressPct}%` }}
-            />
-          </div>
-          {data.next_milestone && (
-            <span className="text-[11px] text-white/30 tabular-nums">
-              {formatCurrency(data.next_milestone.value)}
-            </span>
-          )}
+        {/* Progress bar — option B: % overlaid in center */}
+        <div className="relative w-28 h-[14px] rounded-full bg-white/10 overflow-hidden">
+          <div
+            className="h-full rounded-full bg-brand transition-all duration-500"
+            style={{ width: `${progressPct}%` }}
+          />
+          <span className="absolute inset-0 flex items-center justify-center text-[10px] font-semibold text-white leading-none">
+            {Math.round(progressPct)}%
+          </span>
         </div>
       </button>
 
@@ -100,13 +96,7 @@ export function MilestoneIndicator() {
               return (
                 <div
                   key={m.id}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-colors ${
-                    isNext
-                      ? 'bg-brand/10'
-                      : isAchieved
-                        ? 'bg-white/[0.02]'
-                        : ''
-                  }`}
+                  className="flex items-center gap-3 px-3 py-2 rounded-xl"
                 >
                   {/* Status icon */}
                   <div className="shrink-0">
