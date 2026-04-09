@@ -28,7 +28,7 @@ export default function Dashboard() {
   const [selectedAccount, setSelectedAccount] = useState<string>('');
 
   const hasWayMb = isAdmin || !!user?.payer_email;
-  const hasCartpanda = isAdmin || !!user?.cartpanda_param;
+  const hasCartpanda = isAdmin || !!user?.internacional_param;
   const showToggle = hasWayMb && hasCartpanda;
 
   const { activePlatform, setActivePlatform, stats, cpStats, loading, isFetching, error, refetch } =

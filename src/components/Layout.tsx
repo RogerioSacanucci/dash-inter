@@ -7,6 +7,7 @@ import LordIcon from "./ui/LordIcon";
 
 import dashboardIcon from "../icons/dashboard.json";
 import transferIcon from "../icons/transfer.json";
+import payoutIcon from "../icons/payout.json";
 import shoppingCartIcon from "../icons/shopping-cart.json";
 import storeIcon from "../icons/store.json";
 import scrollTextIcon from "../icons/scroll-text.json";
@@ -79,7 +80,7 @@ export default function Layout() {
 
   const isAdmin = user?.role === "admin";
   const hasWayMb = isAdmin || !!user?.payer_email;
-  const hasCartpanda = isAdmin || !!user?.cartpanda_param;
+  const hasCartpanda = isAdmin || !!user?.internacional_param;
 
   function handleLogout() {
     logout();
@@ -151,7 +152,7 @@ export default function Layout() {
 
           <div className="mt-2">
             <GroupHeader label="Financeiro" />
-            <NavItem to="/saques" label="Saques" end={false} icon={transferIcon} onClick={closeSidebar} />
+            <NavItem to="/saques" label="Saques" end={false} icon={payoutIcon} onClick={closeSidebar} />
           </div>
 
           <div className="mt-2">

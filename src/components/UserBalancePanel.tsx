@@ -91,7 +91,7 @@ export default function UserBalancePanel({ userId }: Props) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/[0.06]">
-                {['Data', 'Tipo', 'Valor', 'Loja', 'Admin', 'Nota'].map((h) => (
+                {['Data', 'Tipo', 'Valor', 'Conta', 'Nota'].map((h) => (
                   <th
                     key={h}
                     className="text-left py-3 px-4 text-xs font-semibold text-white/30 uppercase tracking-widest"
@@ -103,10 +103,10 @@ export default function UserBalancePanel({ userId }: Props) {
             </thead>
             <tbody className="divide-y divide-white/[0.04]">
               {isLoading ? (
-                <SkeletonTableRows rows={5} cols={[55, 40, 45, 50, 60, 40]} />
+                <SkeletonTableRows rows={5} cols={[55, 40, 45, 50, 40]} />
               ) : !data?.payout_logs.data.length ? (
                 <tr>
-                  <td colSpan={6} className="py-10 text-center text-white/20 text-sm">
+                  <td colSpan={5} className="py-10 text-center text-white/20 text-sm">
                     Sem histórico de saques
                   </td>
                 </tr>
@@ -114,7 +114,7 @@ export default function UserBalancePanel({ userId }: Props) {
                 data.payout_logs.data.map((log) => (
                   <tr key={log.id} className="fine-hover:bg-white/[0.02] transition-colors">
                     <td className="py-3.5 px-4 text-white/40 tabular-nums">
-                      {new Date(log.created_at).toLocaleDateString('pt-PT')}
+                      {new Date(log.created_at).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                     </td>
                     <td className="py-3.5 px-4">
                       <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
@@ -130,8 +130,7 @@ export default function UserBalancePanel({ userId }: Props) {
                         {formatBalance(log.amount)}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 text-white/50">{log.shop_name ?? '—'}</td>
-                    <td className="py-3.5 px-4 text-white/50">{log.admin_email}</td>
+                    <td className="py-3.5 px-4 text-white/50">{log.account_index != null ? `Conta ${log.account_index}` : '—'}</td>
                     <td className="py-3.5 px-4 text-white/40">{log.note ?? '—'}</td>
                   </tr>
                 ))
