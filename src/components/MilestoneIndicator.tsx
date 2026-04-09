@@ -1,6 +1,8 @@
 import { useRef, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Trophy, Check } from 'lucide-react';
+import { Player } from '@lordicon/react';
+import { Check } from 'lucide-react';
+import rankIcon from '../icons/rank.json';
 import { api } from '../api/client';
 
 function formatCurrency(value: number): string {
@@ -18,6 +20,7 @@ function formatDate(iso: string): string {
 
 export function MilestoneIndicator() {
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const rankPlayerRef = useRef<Player>(null);
   const [open, setOpen] = useState(false);
 
   const { data } = useQuery({
@@ -48,18 +51,31 @@ export function MilestoneIndicator() {
       {/* Compact trigger */}
       <button
         onClick={() => setOpen((prev) => !prev)}
+        onMouseEnter={() => rankPlayerRef.current?.playFromBeginning()}
         className="flex items-center gap-2 px-3 py-1.5 rounded-lg fine-hover:bg-white/[0.04] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
       >
-        <Trophy size={14} className="text-brand shrink-0" />
+        <Player
+          ref={rankPlayerRef}
+          icon={rankIcon}
+          size={18}
+          colorize="#E8552A"
+        />
         <span className="text-[13px] font-semibold text-white/80">
           {formatCurrency(data.total)}
         </span>
-        {/* Mini progress bar */}
-        <div className="w-16 h-1 rounded-full bg-white/10 overflow-hidden">
-          <div
-            className="h-full rounded-full bg-brand transition-all duration-500"
-            style={{ width: `${progressPct}%` }}
-          />
+        {/* Progress bar with next milestone label */}
+        <div className="flex items-center gap-1.5">
+          <div className="w-24 h-[3px] rounded-full bg-white/10 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-brand transition-all duration-500"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+          {data.next_milestone && (
+            <span className="text-[11px] text-white/30 tabular-nums">
+              {formatCurrency(data.next_milestone.value)}
+            </span>
+          )}
         </div>
       </button>
 
@@ -100,7 +116,7 @@ export function MilestoneIndicator() {
                       </div>
                     ) : isNext ? (
                       <div className="w-5 h-5 rounded-full bg-brand/20 flex items-center justify-center">
-                        <Trophy size={10} className="text-brand" />
+                        <Player icon={rankIcon} size={12} colorize="#E8552A" />
                       </div>
                     ) : (
                       <div className="w-5 h-5 rounded-full bg-white/[0.06]" />
