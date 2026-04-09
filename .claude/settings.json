@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "agent",
+            "prompt": "Review what changed in this session and decide if CLAUDE.md needs updating.\n\n1. Run: git diff HEAD -- 'src/**' to see what src files changed. Also run git diff --cached -- 'src/**' for staged changes.\n2. Read /Users/fabriciojuliano/Documents/ll/dashboard/CLAUDE.md\n3. If the changes introduced something architecturally notable that CLAUDE.md should document — a new hook pattern, a new utility, a new page with non-obvious behavior, a change to data flow, a new dependency used in a new way — update the relevant section of CLAUDE.md. Edit in place, keep the same structure and tone (concise, no obvious instructions).\n4. If the changes are only styling tweaks, bug fixes, copy changes, or minor component updates with no new patterns, do NOT modify CLAUDE.md.\n5. Never add sections for things already covered. Only update what actually changed.",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}
