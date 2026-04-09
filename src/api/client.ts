@@ -423,6 +423,12 @@ export interface MilestoneItem {
   achieved: boolean;
 }
 
+export interface AdminMilestone {
+  id: number;
+  value: number;
+  order: number;
+}
+
 export interface MilestoneProgressResponse {
   total: number;
   next_milestone: { id: number; value: number; progress_pct: number } | null;
@@ -668,6 +674,25 @@ export const api = {
   // Milestones
   getMilestoneProgress: () =>
     request<MilestoneProgressResponse>('/api/milestones/progress'),
+
+  // Admin — Milestones CRUD
+  adminGetMilestones: () =>
+    request<{ milestones: AdminMilestone[] }>('/api/admin/milestones'),
+
+  adminCreateMilestone: (data: { value: number; order: number }) =>
+    request<{ milestone: AdminMilestone }>('/api/admin/milestones', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  adminUpdateMilestone: (id: number, data: { value?: number; order?: number }) =>
+    request<{ milestone: AdminMilestone }>(`/api/admin/milestones/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  adminDeleteMilestone: (id: number) =>
+    request<{ ok: boolean }>(`/api/admin/milestones/${id}`, { method: 'DELETE' }),
 
   // Admin — Webhook logs
   adminWebhookLogs: (params: { event?: string; status?: string; shop_slug?: string; date_from?: string; date_to?: string; page?: number } = {}) => {
