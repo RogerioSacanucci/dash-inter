@@ -417,6 +417,19 @@ export interface AdminCartpandaShopDetailResponse {
   hourly: boolean;
 }
 
+export interface MilestoneItem {
+  id: number;
+  value: number;
+  achieved: boolean;
+}
+
+export interface MilestoneProgressResponse {
+  total: number;
+  next_milestone: { id: number; value: number; progress_pct: number } | null;
+  achieved: { id: number; value: number; achieved_at: string }[];
+  all_milestones: MilestoneItem[];
+}
+
 export const api = {
   login: (email: string, password: string) =>
     request<LoginResponse>("/api/auth/login", {
@@ -651,6 +664,10 @@ export const api = {
     ).toString();
     return request<WalletUsersResponse>(`/api/admin/email-service/users?${qs}`);
   },
+
+  // Milestones
+  getMilestoneProgress: () =>
+    request<MilestoneProgressResponse>('/api/milestones/progress'),
 
   // Admin — Webhook logs
   adminWebhookLogs: (params: { event?: string; status?: string; shop_slug?: string; date_from?: string; date_to?: string; page?: number } = {}) => {

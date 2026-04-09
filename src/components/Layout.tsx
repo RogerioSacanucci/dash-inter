@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { Player } from "@lordicon/react";
 import { useAuth } from "../hooks/useAuth";
 import LordIcon from "./ui/LordIcon";
+import { MilestoneIndicator } from "./MilestoneIndicator";
 
 import dashboardIcon from "../icons/dashboard.json";
 import transferIcon from "../icons/transfer.json";
@@ -188,8 +189,10 @@ export default function Layout() {
       {/* Content frame */}
       <div className="flex-1 flex flex-col min-w-0 lg:ml-[220px]">
 
-        {/* Topbar — empty space reserved to create capsule aesthetic */}
-        <div className="hidden lg:block h-12 shrink-0" />
+        {/* Topbar */}
+        <div className="hidden lg:flex items-center justify-end h-12 shrink-0 px-6">
+          <MilestoneIndicator />
+        </div>
 
         {/* Mobile top bar */}
         <div className="lg:hidden flex items-center justify-between h-14 px-4 bg-canvas shrink-0">
