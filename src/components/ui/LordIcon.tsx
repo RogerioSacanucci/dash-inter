@@ -45,6 +45,8 @@ export default function LordIcon({
         colors={colors}
         colorize={colorize}
         onReady={() => {
+          // Force full element initialization to prevent lottie-web destroy error on unmount
+          playerRef.current?.seek(0);
           if (trigger === 'loop') playerRef.current?.play();
           if (trigger === 'once') playerRef.current?.playFromBeginning();
         }}
