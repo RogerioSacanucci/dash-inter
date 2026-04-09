@@ -7,6 +7,7 @@ import Tabs, { Tab } from '../components/Tabs';
 import UserManagement from '../components/UserManagement';
 import AaPanelConfigManager from '../components/admin/AaPanelConfigManager';
 import UserLinkManager from '../components/admin/UserLinkManager';
+import MilestoneManager from '../components/admin/MilestoneManager';
 import { EmptyState, EmptyIcons } from '../components/ui/EmptyState';
 
 const TABS: Tab[] = [
@@ -14,6 +15,7 @@ const TABS: Tab[] = [
   { key: 'users', label: 'Usuários', adminOnly: true },
   { key: 'aapanel', label: 'Servidores aaPanel', adminOnly: true },
   { key: 'links-admin', label: 'Links', adminOnly: true },
+  { key: 'milestones', label: 'Metas', adminOnly: true },
 ];
 
 const NOTIFY_OPTIONS: { value: 'all' | 'created' | 'paid'; label: string; description: string }[] = [
@@ -220,6 +222,7 @@ export default function Settings() {
       {activeTab === 'users' && <UserManagement />}
       {activeTab === 'aapanel' && <AaPanelConfigManager />}
       {activeTab === 'links-admin' && <UserLinkManager />}
+      {activeTab === 'milestones' && <MilestoneManager />}
     </div>
   );
 }
