@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, LoginResponse } from '../api/client';
+import { queryClient } from '../lib/queryClient';
 
 interface AuthState {
   user: LoginResponse['user'] | null;
@@ -47,6 +48,7 @@ export function useAuth() {
 
   function logout() {
     localStorage.removeItem('token');
+    queryClient.clear();
     setState({ user: null, loading: false, error: null });
   }
 

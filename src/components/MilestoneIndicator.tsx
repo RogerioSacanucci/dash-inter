@@ -18,6 +18,36 @@ function formatDate(iso: string): string {
   });
 }
 
+function RingProgress({ pct }: { pct: number }) {
+  const r = 13;
+  const circ = 2 * Math.PI * r;
+  const dash = (Math.min(pct, 100) / 100) * circ;
+
+  return (
+    <svg width="36" height="36" viewBox="0 0 36 36" className="-rotate-90">
+      <circle
+        cx="18"
+        cy="18"
+        r={r}
+        fill="none"
+        stroke="rgba(255,255,255,0.08)"
+        strokeWidth="3"
+      />
+      <circle
+        cx="18"
+        cy="18"
+        r={r}
+        fill="none"
+        stroke="#E8552A"
+        strokeWidth="3"
+        strokeDasharray={`${dash} ${circ}`}
+        strokeLinecap="round"
+        className="transition-all duration-500"
+      />
+    </svg>
+  );
+}
+
 export function MilestoneIndicator() {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const rankPlayerRef = useRef<Player>(null);
@@ -26,7 +56,7 @@ export function MilestoneIndicator() {
   const { data } = useQuery({
     queryKey: ['milestone-progress'],
     queryFn: () => api.getMilestoneProgress(),
-    staleTime: 5 * 60 * 1000,
+    refetchInterval: 30 * 1000,
   });
 
   useEffect(() => {
@@ -52,26 +82,36 @@ export function MilestoneIndicator() {
       <button
         onClick={() => setOpen((prev) => !prev)}
         onMouseEnter={() => rankPlayerRef.current?.playFromBeginning()}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg fine-hover:bg-white/[0.04] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+        className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-white/[0.04] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
       >
-        <Player
-          ref={rankPlayerRef}
-          icon={rankIcon}
-          size={22}
-          colorize="#E8552A"
-        />
-        <span className="text-[15px] font-semibold text-white/80">
-          {formatCurrency(data.total)}
-        </span>
-        {/* Progress bar — option B: % overlaid in center */}
-        <div className="relative w-28 h-[14px] rounded-full bg-white/10 overflow-hidden">
-          <div
-            className="h-full rounded-full bg-brand transition-all duration-500"
-            style={{ width: `${progressPct}%` }}
-          />
-          <span className="absolute inset-0 flex items-center justify-center text-[10px] font-semibold text-white leading-none">
-            {Math.round(progressPct)}%
+        {/* Ring progress wrapping the rank icon */}
+        <div className="relative flex items-center justify-center w-9 h-9 shrink-0">
+          <RingProgress pct={progressPct} />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Player
+              ref={rankPlayerRef}
+              icon={rankIcon}
+              size={18}
+              colorize="#E8552A"
+            />
+          </div>
+        </div>
+
+        {/* Value → next milestone inline */}
+        <div className="flex items-center gap-1.5 leading-none">
+          <span className="text-[15px] font-semibold text-white">
+            {formatCurrency(data.total)}
           </span>
+          {data.next_milestone ? (
+            <>
+              <span className="text-[13px] text-white/30">→</span>
+              <span className="text-[15px] font-semibold text-brand">
+                {formatCurrency(data.next_milestone.value)}
+              </span>
+            </>
+          ) : (
+            <span className="text-[13px] text-emerald-400">Concluído</span>
+          )}
         </div>
       </button>
 
