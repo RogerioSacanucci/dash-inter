@@ -2,6 +2,14 @@ export function toDateStr(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+export function formatDateWithOffset(iso: string, utcOffset?: number): { date: string; time: string } {
+  const offset = utcOffset ?? getStoredUtcOffset();
+  const adjusted = new Date(new Date(iso).getTime() + offset * 60 * 60 * 1000);
+  const date = adjusted.toLocaleDateString('pt-PT', { timeZone: 'UTC', day: '2-digit', month: '2-digit', year: 'numeric' });
+  const time = adjusted.toLocaleTimeString('pt-PT', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' });
+  return { date, time };
+}
+
 export function getStoredUtcOffset(): number {
   const stored = localStorage.getItem('utc_offset');
   if (stored !== null) {

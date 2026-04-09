@@ -26,7 +26,7 @@ export interface LoginResponse {
     email: string;
     payer_email: string;
     role?: string;
-    cartpanda_param?: string | null;
+    internacional_param?: string | null;
   };
 }
 
@@ -85,8 +85,7 @@ export interface PayoutLog {
   amount: string;
   type: 'withdrawal' | 'adjustment';
   note: string | null;
-  shop_name: string | null;
-  admin_email: string;
+  account_index: number | null;
   created_at: string;
 }
 
@@ -100,6 +99,7 @@ export interface UserBalanceResponse {
 }
 
 export interface UserPayoutsResponse {
+  totals: { total_withdrawals: string; total_adjustments: string };
   balance: {
     balance_pending: string;
     balance_reserve: string;
@@ -112,11 +112,19 @@ export interface UserPayoutsResponse {
   };
 }
 
-export interface AdminPayoutLogEntry extends PayoutLog {
+export interface AdminPayoutLogEntry {
+  id: number;
+  amount: string;
+  type: 'withdrawal' | 'adjustment';
+  note: string | null;
+  shop_name: string | null;
+  admin_email: string;
+  created_at: string;
   user: { id: number; name: string; email: string };
 }
 
 export interface AdminPayoutsResponse {
+  totals: { total_withdrawals: string; total_adjustments: string };
   data: AdminPayoutLogEntry[];
   meta: { total: number; page: number; per_page: number; pages: number };
 }
