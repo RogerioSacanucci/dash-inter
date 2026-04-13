@@ -15,6 +15,7 @@ import CartpandaShops from './pages/admin/CartpandaShops';
 import CartpandaShopDetail from './pages/admin/CartpandaShopDetail';
 import WebhookLogs from './pages/admin/WebhookLogs';
 import EmailService from './pages/admin/EmailService';
+import CheckoutChangeRequests from './pages/admin/CheckoutChangeRequests';
 import Payouts from './pages/Payouts';
 import CheckoutPreview from './pages/CheckoutPreview';
 import Layout from './components/Layout';
@@ -88,6 +89,7 @@ export default function App() {
           <Route path="admin/internacional-shops/:id" element={<AdminGuard><CartpandaShopDetail /></AdminGuard>} />
           <Route path="admin/webhook-logs" element={<AdminGuard><WebhookLogs /></AdminGuard>} />
           <Route path="admin/email-service" element={<AdminGuard><EmailService /></AdminGuard>} />
+          <Route path="admin/checkout-requests" element={<AdminGuard><CheckoutChangeRequests /></AdminGuard>} />
           <Route path="saques" element={<Payouts />} />
           <Route path="checkout" element={<CheckoutPreview />} />
         </Route>

@@ -148,6 +148,9 @@ export default function Layout() {
               {isAdmin && (
                 <NavItem to="/admin/email-service" label="E-mail Service" end={false} icon={mailIcon} onClick={closeSidebar} />
               )}
+              {isAdmin && (
+                <NavItem to="/admin/checkout-requests" label="Checkout Requests" end={false} icon={scrollTextIcon} onClick={closeSidebar} />
+              )}
             </div>
           )}
 
