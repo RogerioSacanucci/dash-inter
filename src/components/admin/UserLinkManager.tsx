@@ -3,9 +3,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   api,
   AdminUserLink,
+  CheckoutPreviewListItem,
   CreateUserLinkPayload,
   UpdateUserLinkPayload,
 } from '../../api/client';
+
+type LinkType = 'ficheiro' | 'estatico' | 'checkout';
 
 interface FormState {
   user_id: string;
@@ -13,7 +16,7 @@ interface FormState {
   label: string;
   external_url: string;
   file_path: string;
-  is_static: boolean;
+  link_type: LinkType;
 }
 
 const emptyForm: FormState = {
@@ -22,8 +25,12 @@ const emptyForm: FormState = {
   label: '',
   external_url: '',
   file_path: '',
-  is_static: false,
+  link_type: 'ficheiro',
 };
+
+type ListItem =
+  | { kind: 'link'; data: AdminUserLink }
+  | { kind: 'checkout'; data: CheckoutPreviewListItem };
 
 export default function UserLinkManager() {
   const queryClient = useQueryClient();
@@ -32,6 +39,8 @@ export default function UserLinkManager() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [checkoutFile, setCheckoutFile] = useState<File | null>(null);
+  const [checkoutUploading, setCheckoutUploading] = useState(false);
 
   function copyLink(id: number, url: string) {
     navigator.clipboard.writeText(url).then(() => {
@@ -45,6 +54,11 @@ export default function UserLinkManager() {
     queryFn: () => api.adminUserLinks(),
   });
 
+  const { data: checkoutData, isLoading: loadingCheckouts } = useQuery({
+    queryKey: ['admin-checkout-previews'],
+    queryFn: () => api.adminCheckoutPreviews(),
+  });
+
   const { data: usersData, isLoading: loadingUsers } = useQuery({
     queryKey: ['admin-users'],
     queryFn: () => api.adminUsers(1),
@@ -56,9 +70,16 @@ export default function UserLinkManager() {
   });
 
   const links = linksData?.data ?? [];
+  const checkoutPreviews = checkoutData?.data ?? [];
   const users = usersData?.data ?? [];
   const configs = configsData?.data ?? [];
-  const loading = loadingLinks || loadingUsers || loadingConfigs;
+  const loading = loadingLinks || loadingCheckouts || loadingUsers || loadingConfigs;
+
+  // Merge links and checkout previews into unified list
+  const allItems: ListItem[] = [
+    ...links.map((data): ListItem => ({ kind: 'link', data })),
+    ...checkoutPreviews.map((data): ListItem => ({ kind: 'checkout', data })),
+  ];
 
   const createMutation = useMutation({
     mutationFn: (payload: CreateUserLinkPayload) => api.adminCreateUserLink(payload),
@@ -79,6 +100,7 @@ export default function UserLinkManager() {
   function openCreate() {
     setEditingId(null);
     setForm(emptyForm);
+    setCheckoutFile(null);
     setShowForm(true);
   }
 
@@ -90,7 +112,7 @@ export default function UserLinkManager() {
       label: link.label,
       external_url: link.external_url,
       file_path: link.file_path ?? '',
-      is_static: link.aapanel_config_id === null,
+      link_type: link.aapanel_config_id === null ? 'estatico' : 'ficheiro',
     });
     setShowForm(true);
   }
@@ -99,27 +121,52 @@ export default function UserLinkManager() {
     setShowForm(false);
     setEditingId(null);
     setForm(emptyForm);
+    setCheckoutFile(null);
+  }
+
+  async function handleSubmitCheckout() {
+    if (!checkoutFile || !form.user_id) {
+      setError('Seleciona um utilizador e um ficheiro HTML.');
+      return;
+    }
+    setError(null);
+    setCheckoutUploading(true);
+    try {
+      await api.adminUploadCheckoutPreview(Number(form.user_id), checkoutFile);
+      queryClient.invalidateQueries({ queryKey: ['admin-checkout-previews'] });
+      closeForm();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao fazer upload.');
+    } finally {
+      setCheckoutUploading(false);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    if (form.link_type === 'checkout') {
+      await handleSubmitCheckout();
+      return;
+    }
+
     setError(null);
 
     try {
       if (editingId === null) {
         const payload: CreateUserLinkPayload = {
           user_id: Number(form.user_id),
-          aapanel_config_id: form.is_static ? null : Number(form.aapanel_config_id),
+          aapanel_config_id: form.link_type === 'estatico' ? null : Number(form.aapanel_config_id),
           label: form.label,
           external_url: form.external_url,
-          file_path: form.is_static ? null : form.file_path,
+          file_path: form.link_type === 'estatico' ? null : form.file_path,
         };
         await createMutation.mutateAsync(payload);
       } else {
         const payload: UpdateUserLinkPayload = {
           label: form.label,
           external_url: form.external_url,
-          file_path: form.is_static ? null : form.file_path,
+          file_path: form.link_type === 'estatico' ? null : form.file_path,
         };
         await updateMutation.mutateAsync({ id: editingId, payload });
       }
@@ -139,13 +186,24 @@ export default function UserLinkManager() {
     }
   }
 
-  function updateField(field: keyof FormState, value: string | boolean) {
+  async function handleDeleteCheckout(userId: number, email: string) {
+    if (!confirm(`Remover checkout preview de "${email}"?`)) return;
+    setError(null);
+    try {
+      await api.adminDeleteCheckoutPreview(userId);
+      queryClient.invalidateQueries({ queryKey: ['admin-checkout-previews'] });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao remover checkout.');
+    }
+  }
+
+  function updateField(field: keyof FormState, value: string) {
     setForm((prev) => {
       if (field === 'user_id') {
-        return { ...prev, user_id: value as string, aapanel_config_id: '' };
+        return { ...prev, user_id: value, aapanel_config_id: '' };
       }
-      if (field === 'is_static') {
-        return { ...prev, is_static: value as boolean, aapanel_config_id: '' };
+      if (field === 'link_type') {
+        return { ...prev, link_type: value as LinkType, aapanel_config_id: '' };
       }
       return { ...prev, [field]: value };
     });
@@ -155,7 +213,7 @@ export default function UserLinkManager() {
     (c) => !form.user_id || c.user_id === Number(form.user_id),
   );
 
-  const saving = createMutation.isPending || updateMutation.isPending;
+  const saving = createMutation.isPending || updateMutation.isPending || checkoutUploading;
 
   return (
     <div>
@@ -194,28 +252,21 @@ export default function UserLinkManager() {
           <div>
             <label className="block text-sm text-white/60 mb-2">Tipo</label>
             <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => updateField('is_static', false)}
-                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  !form.is_static
-                    ? 'bg-brand text-white'
-                    : 'bg-surface-1 text-white/50 hover:text-white border border-zinc-800'
-                }`}
-              >
-                Ficheiro
-              </button>
-              <button
-                type="button"
-                onClick={() => updateField('is_static', true)}
-                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  form.is_static
-                    ? 'bg-brand text-white'
-                    : 'bg-surface-1 text-white/50 hover:text-white border border-zinc-800'
-                }`}
-              >
-                Estático
-              </button>
+              {(['ficheiro', 'estatico', 'checkout'] as LinkType[]).map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  disabled={editingId !== null}
+                  onClick={() => updateField('link_type', type)}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                    form.link_type === type
+                      ? 'bg-brand text-white'
+                      : 'bg-surface-1 text-white/50 hover:text-white border border-zinc-800'
+                  }`}
+                >
+                  {type === 'ficheiro' ? 'Ficheiro' : type === 'estatico' ? 'Estático' : 'Checkout'}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -238,61 +289,80 @@ export default function UserLinkManager() {
             </div>
           )}
 
-          {editingId === null && !form.is_static && (
+          {/* Checkout type: only file input */}
+          {form.link_type === 'checkout' && (
             <div>
-              <label className="block text-sm text-white/60 mb-1">Servidor aaPanel</label>
-              <select
-                value={form.aapanel_config_id}
-                onChange={(e) => updateField('aapanel_config_id', e.target.value)}
+              <label className="block text-sm text-white/60 mb-1">Ficheiro HTML</label>
+              <input
+                type="file"
+                accept=".html,.htm"
                 required
-                disabled={!form.user_id}
-                className="w-full bg-surface-1 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <option value="">Selecione...</option>
-                {filteredConfigs.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
+                onChange={(e) => setCheckoutFile(e.target.files?.[0] ?? null)}
+                className="w-full text-xs text-white/60 bg-surface-1 border border-zinc-800 rounded-lg px-3 py-2 file:mr-3 file:text-xs file:font-medium file:bg-brand file:text-white file:border-0 file:rounded-lg file:px-3 file:py-1 file:cursor-pointer cursor-pointer"
+              />
             </div>
           )}
 
-          <div>
-            <label className="block text-sm text-white/60 mb-1">Label</label>
-            <input
-              type="text"
-              value={form.label}
-              onChange={(e) => updateField('label', e.target.value)}
-              required
-              className="w-full bg-surface-1 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand"
-            />
-          </div>
+          {/* Ficheiro type: aaPanel + label + external_url + file_path */}
+          {form.link_type !== 'checkout' && (
+            <>
+              {editingId === null && form.link_type === 'ficheiro' && (
+                <div>
+                  <label className="block text-sm text-white/60 mb-1">Servidor aaPanel</label>
+                  <select
+                    value={form.aapanel_config_id}
+                    onChange={(e) => updateField('aapanel_config_id', e.target.value)}
+                    required
+                    disabled={!form.user_id}
+                    className="w-full bg-surface-1 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <option value="">Selecione...</option>
+                    {filteredConfigs.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
-          <div>
-            <label className="block text-sm text-white/60 mb-1">URL externa</label>
-            <input
-              type="text"
-              value={form.external_url}
-              onChange={(e) => updateField('external_url', e.target.value)}
-              required
-              placeholder="https://meusite.com"
-              className="w-full bg-surface-1 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-brand"
-            />
-          </div>
+              <div>
+                <label className="block text-sm text-white/60 mb-1">Label</label>
+                <input
+                  type="text"
+                  value={form.label}
+                  onChange={(e) => updateField('label', e.target.value)}
+                  required
+                  className="w-full bg-surface-1 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand"
+                />
+              </div>
 
-          {!form.is_static && (
-            <div>
-              <label className="block text-sm text-white/60 mb-1">Caminho do ficheiro</label>
-              <input
-                type="text"
-                value={form.file_path}
-                onChange={(e) => updateField('file_path', e.target.value)}
-                required
-                placeholder="/www/wwwroot/meusite.com/index.html"
-                className="w-full bg-surface-1 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white font-mono text-xs placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-brand"
-              />
-            </div>
+              <div>
+                <label className="block text-sm text-white/60 mb-1">URL externa</label>
+                <input
+                  type="text"
+                  value={form.external_url}
+                  onChange={(e) => updateField('external_url', e.target.value)}
+                  required
+                  placeholder="https://meusite.com"
+                  className="w-full bg-surface-1 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-brand"
+                />
+              </div>
+
+              {form.link_type === 'ficheiro' && (
+                <div>
+                  <label className="block text-sm text-white/60 mb-1">Caminho do ficheiro</label>
+                  <input
+                    type="text"
+                    value={form.file_path}
+                    onChange={(e) => updateField('file_path', e.target.value)}
+                    required
+                    placeholder="/www/wwwroot/meusite.com/index.html"
+                    className="w-full bg-surface-1 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white font-mono text-xs placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-brand"
+                  />
+                </div>
+              )}
+            </>
           )}
 
           <div className="flex gap-3 pt-1">
@@ -316,62 +386,92 @@ export default function UserLinkManager() {
 
       {loading ? (
         <p className="text-sm text-white/40">Carregando...</p>
-      ) : links.length === 0 ? (
+      ) : allItems.length === 0 ? (
         <p className="text-sm text-white/40">Nenhum link encontrado.</p>
       ) : (
         <div className="space-y-3">
-          {links.map((link) => (
-            <div
-              key={link.id}
-              className="bg-surface-2 border border-zinc-800 rounded-xl px-5 py-4"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-white">{link.label}</span>
-                  {link.aapanel_config_id === null && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-800 text-white/40">
-                      estático
-                    </span>
+          {allItems.map((item) => {
+            if (item.kind === 'checkout') {
+              const preview = item.data;
+              return (
+                <div
+                  key={`checkout-${preview.user_id}`}
+                  className="bg-surface-2 border border-zinc-800 rounded-xl px-5 py-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-white">Checkout Preview</span>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-brand/10 text-brand/80">
+                        checkout
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCheckout(preview.user_id, preview.user_email)}
+                      className="px-3 py-1 text-xs text-red-400 hover:text-red-300 border border-zinc-800 rounded-lg transition-colors"
+                    >
+                      Remover
+                    </button>
+                  </div>
+                  <p className="text-xs text-white/40 mt-1">{preview.user_email}</p>
+                </div>
+              );
+            }
+
+            const link = item.data;
+            return (
+              <div
+                key={`link-${link.id}`}
+                className="bg-surface-2 border border-zinc-800 rounded-xl px-5 py-4"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-white">{link.label}</span>
+                    {link.aapanel_config_id === null && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-800 text-white/40">
+                        estático
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => copyLink(link.id, link.external_url)}
+                      className="px-3 py-1 text-xs text-white/60 hover:text-white border border-zinc-800 rounded-lg transition-colors"
+                    >
+                      {copiedId === link.id ? 'Copiado!' : 'Copiar'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openEdit(link)}
+                      className="px-3 py-1 text-xs text-white/60 hover:text-white border border-zinc-800 rounded-lg transition-colors"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(link)}
+                      disabled={deleteMutation.isPending}
+                      className="px-3 py-1 text-xs text-red-400 hover:text-red-300 border border-zinc-800 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      Remover
+                    </button>
+                  </div>
+                </div>
+                <p className="text-xs text-white/40 mt-1">
+                  {link.user_email}
+                  {link.aapanel_config_label && (
+                    <> &middot; {link.aapanel_config_label}</>
                   )}
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => copyLink(link.id, link.external_url)}
-                    className="px-3 py-1 text-xs text-white/60 hover:text-white border border-zinc-800 rounded-lg transition-colors"
-                  >
-                    {copiedId === link.id ? 'Copiado!' : 'Copiar'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => openEdit(link)}
-                    className="px-3 py-1 text-xs text-white/60 hover:text-white border border-zinc-800 rounded-lg transition-colors"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(link)}
-                    disabled={deleteMutation.isPending}
-                    className="px-3 py-1 text-xs text-red-400 hover:text-red-300 border border-zinc-800 rounded-lg transition-colors disabled:opacity-50"
-                  >
-                    Remover
-                  </button>
-                </div>
-              </div>
-              <p className="text-xs text-white/40 mt-1">
-                {link.user_email}
-                {link.aapanel_config_label && (
-                  <> &middot; {link.aapanel_config_label}</>
-                )}
-              </p>
-              {link.file_path && (
-                <p className="text-xs text-white/30 mt-0.5 font-mono min-w-0 truncate">
-                  {link.file_path}
                 </p>
-              )}
-            </div>
-          ))}
+                {link.file_path && (
+                  <p className="text-xs text-white/30 mt-0.5 font-mono min-w-0 truncate">
+                    {link.file_path}
+                  </p>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

@@ -446,6 +446,13 @@ export interface CheckoutPreviewStatus {
   has_preview: boolean;
 }
 
+export interface CheckoutPreviewListItem {
+  user_id: number;
+  user_email: string;
+  has_preview: boolean;
+  created_at: string;
+}
+
 export interface CheckoutChangeRequest {
   id: number;
   message: string;
@@ -771,6 +778,9 @@ export const api = {
     }),
 
   // Checkout Preview — admin
+  adminCheckoutPreviews: () =>
+    request<{ data: CheckoutPreviewListItem[] }>('/api/admin/checkout-previews'),
+
   adminCheckoutPreviewStatus: (userId: number) =>
     request<CheckoutPreviewStatus>(`/api/admin/users/${userId}/checkout-preview`),
 
