@@ -437,6 +437,41 @@ export interface MilestoneProgressResponse {
   all_milestones: MilestoneItem[];
 }
 
+export interface CheckoutPreviewToken {
+  has_preview: boolean;
+  url?: string;
+}
+
+export interface CheckoutPreviewStatus {
+  has_preview: boolean;
+}
+
+export interface CheckoutChangeRequest {
+  id: number;
+  message: string;
+  status: 'pending' | 'done';
+  created_at: string;
+}
+
+export interface AdminCheckoutChangeRequest {
+  id: number;
+  user_id: number;
+  user_email: string;
+  message: string;
+  status: 'pending' | 'done';
+  created_at: string;
+}
+
+export interface CheckoutChangeRequestsResponse {
+  data: CheckoutChangeRequest[];
+  meta: { total: number; page: number; per_page: number; pages: number };
+}
+
+export interface AdminCheckoutChangeRequestsResponse {
+  data: AdminCheckoutChangeRequest[];
+  meta: { total: number; page: number; per_page: number; pages: number };
+}
+
 export const api = {
   login: (email: string, password: string) =>
     request<LoginResponse>("/api/auth/login", {
@@ -721,4 +756,50 @@ export const api = {
     if (params.page) q.set('page', String(params.page));
     return request<WebhookLogsResponse>(`/api/admin/webhook-logs?${q}`);
   },
+
+  // Checkout Preview — user
+  checkoutPreviewToken: () =>
+    request<CheckoutPreviewToken>('/api/checkout-preview/token'),
+
+  checkoutChangeRequests: (page = 1) =>
+    request<CheckoutChangeRequestsResponse>(`/api/checkout-change-requests?page=${page}`),
+
+  submitCheckoutChangeRequest: (message: string) =>
+    request<{ data: CheckoutChangeRequest }>('/api/checkout-change-requests', {
+      method: 'POST',
+      body: JSON.stringify({ message }),
+    }),
+
+  // Checkout Preview — admin
+  adminCheckoutPreviewStatus: (userId: number) =>
+    request<CheckoutPreviewStatus>(`/api/admin/users/${userId}/checkout-preview`),
+
+  adminUploadCheckoutPreview: (userId: number, file: File): Promise<{ message: string }> => {
+    const form = new FormData();
+    form.append('file', file);
+    const token = localStorage.getItem('token');
+    return fetch(`${HUB_URL}/api/admin/users/${userId}/checkout-preview`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      body: form,
+    }).then(async (res) => {
+      const data = await res.json();
+      if (!res.ok) { throw new Error(data.message ?? data.error ?? 'Upload failed'); }
+      return data;
+    });
+  },
+
+  adminDeleteCheckoutPreview: (userId: number) =>
+    request<{ message: string }>(`/api/admin/users/${userId}/checkout-preview`, {
+      method: 'DELETE',
+    }),
+
+  adminCheckoutChangeRequests: (page = 1) =>
+    request<AdminCheckoutChangeRequestsResponse>(`/api/admin/checkout-change-requests?page=${page}`),
+
+  adminUpdateCheckoutChangeRequest: (id: number, status: 'pending' | 'done') =>
+    request<{ data: { id: number; status: 'pending' | 'done' } }>(`/api/admin/checkout-change-requests/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }),
 };
