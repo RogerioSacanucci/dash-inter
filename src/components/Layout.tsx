@@ -149,7 +149,7 @@ export default function Layout() {
                 <NavItem to="/admin/email-service" label="E-mail Service" end={false} icon={mailIcon} onClick={closeSidebar} />
               )}
               {isAdmin && (
-                <NavItem to="/admin/checkout-requests" label="Checkout Requests" end={false} icon={scrollTextIcon} onClick={closeSidebar} />
+                <NavItem to="/admin/checkout-requests" label="Pedidos de Alteração" end={false} icon={scrollTextIcon} onClick={closeSidebar} />
               )}
             </div>
           )}
@@ -162,6 +162,7 @@ export default function Layout() {
           <div className="mt-2">
             <GroupHeader label="Ferramentas" />
             <NavItem to="/links" label="Links" end={false} icon={linkIcon} onClick={closeSidebar} />
+            <NavItem to="/checkout" label="Checkout" end={false} icon={shoppingCartIcon} onClick={closeSidebar} />
           </div>
         </nav>
 
