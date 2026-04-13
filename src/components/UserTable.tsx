@@ -15,9 +15,10 @@ interface UserTableProps {
   onToggleActive: (user: AdminUser) => void;
   togglingId: number | null;
   onViewBalance?: (user: AdminUser) => void;
+  onViewPushcut?: (user: AdminUser) => void;
 }
 
-export default function UserTable({ users, loading, currentUserId, onEdit, onToggleActive, togglingId, onViewBalance }: UserTableProps) {
+export default function UserTable({ users, loading, currentUserId, onEdit, onToggleActive, togglingId, onViewBalance, onViewPushcut }: UserTableProps) {
   if (loading) {
     return (
       <div className="flex justify-center py-16 text-white/20 text-sm">
@@ -96,6 +97,15 @@ export default function UserTable({ users, loading, currentUserId, onEdit, onTog
                       className="text-sm text-white/40 hover:text-white/70 transition-colors"
                     >
                       Saldo
+                    </button>
+                  )}
+                  {onViewPushcut && (
+                    <button
+                      type="button"
+                      onClick={() => onViewPushcut(user)}
+                      className="text-sm text-white/40 hover:text-white/70 transition-colors"
+                    >
+                      Pushcut
                     </button>
                   )}
                   {user.id !== currentUserId && (

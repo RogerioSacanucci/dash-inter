@@ -187,6 +187,7 @@ export interface UserPushcutUrl {
   url: string;
   notify: 'all' | 'created' | 'paid';
   label: string | null;
+  admin_only: boolean;
   created_at: string;
 }
 export interface UserPushcutUrlsResponse { data: UserPushcutUrl[]; }
@@ -537,6 +538,21 @@ export const api = {
 
   deletePushcutUrl: (id: number) =>
     request<{ ok: boolean }>(`/api/pushcut-urls/${id}`, {
+      method: 'DELETE',
+    }),
+
+  // Admin — pushcut URLs
+  adminPushcutUrls: (userId: number) =>
+    request<UserPushcutUrlsResponse>(`/api/admin/users/${userId}/pushcut-urls`),
+
+  adminCreatePushcutUrl: (userId: number, data: CreatePushcutUrlPayload) =>
+    request<{ data: UserPushcutUrl }>(`/api/admin/users/${userId}/pushcut-urls`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  adminDeletePushcutUrl: (id: number) =>
+    request<{ ok: boolean }>(`/api/admin/pushcut-urls/${id}`, {
       method: 'DELETE',
     }),
 

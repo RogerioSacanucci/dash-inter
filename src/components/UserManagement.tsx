@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import UserTable from './UserTable';
 import UserFormModal from './UserFormModal';
 import UserBalancePanel from './UserBalancePanel';
+import AdminPushcutUrlPanel from './AdminPushcutUrlPanel';
 
 export default function UserManagement() {
   const { user: currentUser } = useAuth();
@@ -12,6 +13,7 @@ export default function UserManagement() {
   const [modalUser, setModalUser] = useState<AdminUser | null | undefined>(undefined);
   const [togglingId, setTogglingId] = useState<number | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [pushcutUserId, setPushcutUserId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -89,6 +91,7 @@ export default function UserManagement() {
           onToggleActive={handleToggleActive}
           togglingId={togglingId}
           onViewBalance={(user) => setSelectedUserId(user.id)}
+          onViewPushcut={(user) => setPushcutUserId(pushcutUserId === user.id ? null : user.id)}
         />
       </div>
 
@@ -107,6 +110,24 @@ export default function UserManagement() {
             </button>
           </div>
           <UserBalancePanel userId={selectedUserId} />
+        </div>
+      )}
+
+      {pushcutUserId !== null && (
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-base font-semibold text-white">
+              Pushcut (admin) — {users.find((u) => u.id === pushcutUserId)?.email}
+            </h3>
+            <button
+              type="button"
+              onClick={() => setPushcutUserId(null)}
+              className="text-sm text-white/30 hover:text-white/60 transition-colors"
+            >
+              Fechar ×
+            </button>
+          </div>
+          <AdminPushcutUrlPanel userId={pushcutUserId} />
         </div>
       )}
 
