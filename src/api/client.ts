@@ -198,6 +198,24 @@ export interface CreatePushcutUrlPayload {
 }
 export type UpdatePushcutUrlPayload = Partial<CreatePushcutUrlPayload>;
 
+export interface TiktokPixel {
+  id: number;
+  pixel_code: string;
+  label: string | null;
+  test_event_code: string | null;
+  enabled: boolean;
+  created_at: string;
+}
+export interface TiktokPixelsResponse { data: TiktokPixel[]; }
+export interface CreateTiktokPixelPayload {
+  pixel_code: string;
+  access_token: string;
+  label?: string;
+  test_event_code?: string;
+  enabled?: boolean;
+}
+export type UpdateTiktokPixelPayload = Partial<CreateTiktokPixelPayload>;
+
 // User-facing
 export interface UserLink {
   id: number;
@@ -580,6 +598,27 @@ export const api = {
 
   deletePushcutUrl: (id: number) =>
     request<{ ok: boolean }>(`/api/pushcut-urls/${id}`, {
+      method: 'DELETE',
+    }),
+
+  // TikTok Pixels
+  tiktokPixels: () =>
+    request<TiktokPixelsResponse>('/api/tiktok-pixels'),
+
+  createTiktokPixel: (data: CreateTiktokPixelPayload) =>
+    request<{ data: TiktokPixel }>('/api/tiktok-pixels', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updateTiktokPixel: (id: number, data: UpdateTiktokPixelPayload) =>
+    request<{ data: TiktokPixel }>(`/api/tiktok-pixels/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  deleteTiktokPixel: (id: number) =>
+    request<{ ok: boolean }>(`/api/tiktok-pixels/${id}`, {
       method: 'DELETE',
     }),
 

@@ -8,10 +8,12 @@ import UserManagement from '../components/UserManagement';
 import AaPanelConfigManager from '../components/admin/AaPanelConfigManager';
 import UserLinkManager from '../components/admin/UserLinkManager';
 import MilestoneManager from '../components/admin/MilestoneManager';
+import TiktokPixelManager from '../components/TiktokPixelManager';
 import { EmptyState, EmptyIcons } from '../components/ui/EmptyState';
 
 const TABS: Tab[] = [
   { key: 'notifications', label: 'Notificações' },
+  { key: 'tiktok', label: 'TikTok' },
   { key: 'users', label: 'Usuários', adminOnly: true },
   { key: 'aapanel', label: 'Servidores aaPanel', adminOnly: true },
   { key: 'links-admin', label: 'Links', adminOnly: true },
@@ -219,6 +221,7 @@ export default function Settings() {
         </div>
       )}
 
+      {activeTab === 'tiktok' && <TiktokPixelManager />}
       {activeTab === 'users' && <UserManagement />}
       {activeTab === 'aapanel' && <AaPanelConfigManager />}
       {activeTab === 'links-admin' && <UserLinkManager />}
