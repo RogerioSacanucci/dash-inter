@@ -194,7 +194,10 @@ export default function CartpandaOrders() {
             <caption className="sr-only">Carregando pedidos Internacional</caption>
             <thead>
               <tr className="border-b border-white/[0.06]">
-                {['ID Pedido', 'Valor', 'Evento', 'Status', 'Comprador', 'Data'].map((h) => (
+                {(isAdmin
+                  ? ['ID Pedido', 'Valor', 'Evento', 'Status', 'Comprador', 'Colaborador', 'Data']
+                  : ['ID Pedido', 'Valor', 'Evento', 'Status', 'Comprador', 'Data']
+                ).map((h) => (
                   <th
                     key={h}
                     scope="col"
@@ -206,12 +209,12 @@ export default function CartpandaOrders() {
               </tr>
             </thead>
             <tbody>
-              <SkeletonTableRows cols={[30, 15, 20, 18, 25, 20]} />
+              <SkeletonTableRows cols={isAdmin ? [30, 15, 20, 18, 25, 25, 20] : [30, 15, 20, 18, 25, 20]} />
             </tbody>
           </table>
         ) : (
           <>
-            <CartpandaOrderTable orders={ordersQuery.data?.data ?? []} />
+            <CartpandaOrderTable orders={ordersQuery.data?.data ?? []} isAdmin={isAdmin} />
 
             {/* Pagination */}
             {totalPages > 1 && (

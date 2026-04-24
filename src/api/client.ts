@@ -367,6 +367,7 @@ export interface CartpandaOrder {
   event: string;
   payer_name: string | null;
   payer_email: string | null;
+  user_email: string | null;
   created_at: string;
 }
 

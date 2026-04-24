@@ -19,12 +19,17 @@ const STATUS_LABELS: Record<string, string> = {
 
 interface Props {
   orders: CartpandaOrder[];
+  isAdmin?: boolean;
 }
 
-export default function CartpandaOrderTable({ orders }: Props) {
+export default function CartpandaOrderTable({ orders, isAdmin = false }: Props) {
   if (!orders.length) {
     return <EmptyState icon={EmptyIcons.order} message="Nenhum pedido encontrado" hint="Tente ajustar os filtros ou o período" />;
   }
+
+  const headers = isAdmin
+    ? ['ID Pedido', 'Valor', 'Evento', 'Status', 'Comprador', 'Colaborador', 'Data']
+    : ['ID Pedido', 'Valor', 'Evento', 'Status', 'Comprador', 'Data'];
 
   return (
     <div className="overflow-x-auto">
@@ -32,7 +37,7 @@ export default function CartpandaOrderTable({ orders }: Props) {
         <caption className="sr-only">Lista de pedidos Internacional</caption>
         <thead>
           <tr className="border-b border-white/[0.06]">
-            {['ID Pedido', 'Valor', 'Evento', 'Status', 'Comprador', 'Data'].map((h) => (
+            {headers.map((h) => (
               <th
                 key={h}
                 scope="col"
@@ -71,6 +76,13 @@ export default function CartpandaOrderTable({ orders }: Props) {
               <td className="py-3.5 px-4 text-white/50">
                 {order.payer_name ?? '—'}
               </td>
+              {isAdmin && (
+                <td className="py-3.5 px-4 text-white/50 max-w-[200px]">
+                  <span className="block truncate" title={order.user_email ?? undefined}>
+                    {order.user_email ?? '—'}
+                  </span>
+                </td>
+              )}
               <td className="py-3.5 px-4 whitespace-nowrap">
                 <div className="text-white/60 text-sm">
                   {new Date(order.created_at).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' })}
