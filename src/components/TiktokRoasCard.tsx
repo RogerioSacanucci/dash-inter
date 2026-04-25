@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { api } from '../api/client';
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "../api/client";
 
 interface Props {
   dateFrom: string;
@@ -19,7 +19,7 @@ export default function TiktokRoasCard({ dateFrom, dateTo, userId }: Props) {
   );
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['tiktok-roas', params],
+    queryKey: ["tiktok-roas", params],
     queryFn: () => api.tiktokRoas(params),
     retry: 0,
     staleTime: 60_000,
@@ -43,31 +43,49 @@ export default function TiktokRoasCard({ dateFrom, dateTo, userId }: Props) {
         <div>
           <h2 className="font-semibold text-white">TikTok · ROAS</h2>
           <p className="text-xs text-white/40 mt-0.5">
-            Gasto na TikTok × receita CartPanda no período
+            Gasto na TikTok × receita
           </p>
         </div>
         <span className="bg-surface-2 border border-white/[0.06] rounded-lg px-3 py-1.5 text-xs font-semibold text-white/60">
-          {r?.currency ?? 'USD'}
+          {r?.currency ?? "USD"}
         </span>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Metric
           label="ROAS"
-          value={r?.roas !== null && r?.roas !== undefined ? `${r.roas.toFixed(2)}x` : '—'}
-          tone={r && r.roas !== null && r.roas >= 1 ? 'good' : r && r.roas !== null ? 'warn' : 'neutral'}
+          value={
+            r?.roas !== null && r?.roas !== undefined
+              ? `${r.roas.toFixed(2)}x`
+              : "—"
+          }
+          tone={
+            r && r.roas !== null && r.roas >= 1
+              ? "good"
+              : r && r.roas !== null
+                ? "warn"
+                : "neutral"
+          }
         />
         <Metric
           label="Gasto"
-          value={isLoading ? '…' : `${r?.currency ?? '$'} ${(r?.total_spend ?? 0).toFixed(2)}`}
+          value={
+            isLoading
+              ? "…"
+              : `${r?.currency ?? "$"} ${(r?.total_spend ?? 0).toFixed(2)}`
+          }
         />
         <Metric
           label="Receita"
-          value={isLoading ? '…' : `${r?.currency ?? '$'} ${(r?.total_revenue ?? 0).toFixed(2)}`}
+          value={
+            isLoading
+              ? "…"
+              : `${r?.currency ?? "$"} ${(r?.total_revenue ?? 0).toFixed(2)}`
+          }
         />
         <Metric
           label="Pedidos"
-          value={isLoading ? '…' : String(r?.orders ?? 0)}
+          value={isLoading ? "…" : String(r?.orders ?? 0)}
         />
       </div>
 
@@ -82,7 +100,9 @@ export default function TiktokRoasCard({ dateFrom, dateTo, userId }: Props) {
                 key={`${a.connection_id}:${a.advertiser_id}`}
                 className="inline-flex items-center gap-2 bg-surface-2 border border-white/[0.06] rounded-lg px-3 py-1.5 text-xs"
               >
-                <span className="text-white/60 truncate max-w-[180px]">{a.name}</span>
+                <span className="text-white/60 truncate max-w-[180px]">
+                  {a.name}
+                </span>
                 <span className="font-semibold tabular-nums text-white/80">
                   {a.currency} {a.spend.toFixed(2)}
                 </span>
@@ -95,17 +115,29 @@ export default function TiktokRoasCard({ dateFrom, dateTo, userId }: Props) {
   );
 }
 
-function Metric({ label, value, tone }: { label: string; value: string; tone?: 'good' | 'warn' | 'neutral' }) {
+function Metric({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: "good" | "warn" | "neutral";
+}) {
   const valueClass =
-    tone === 'good'
-      ? 'text-emerald-400'
-      : tone === 'warn'
-        ? 'text-amber-400'
-        : 'text-white';
+    tone === "good"
+      ? "text-emerald-400"
+      : tone === "warn"
+        ? "text-amber-400"
+        : "text-white";
   return (
     <div className="bg-surface-2 border border-white/[0.04] rounded-xl px-4 py-3">
-      <div className="text-[10px] font-semibold uppercase tracking-wider text-white/40">{label}</div>
-      <div className={`mt-1 text-xl font-bold tabular-nums ${valueClass}`}>{value}</div>
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-white/40">
+        {label}
+      </div>
+      <div className={`mt-1 text-xl font-bold tabular-nums ${valueClass}`}>
+        {value}
+      </div>
     </div>
   );
 }
