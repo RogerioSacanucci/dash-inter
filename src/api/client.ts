@@ -676,6 +676,12 @@ export const api = {
   tiktokEventLog: (id: number) =>
     request<{ data: TiktokEventLogDetail }>(`/api/tiktok-events/${id}`),
 
+  retryTiktokEvent: (id: number) =>
+    request<{ data: { id: number; success: boolean; tiktok_message: string | null; created_at: string } }>(
+      `/api/tiktok-events/${id}/retry`,
+      { method: 'POST', body: JSON.stringify({}) },
+    ),
+
   // Admin — pushcut URLs
   adminPushcutUrls: (userId: number) =>
     request<UserPushcutUrlsResponse>(`/api/admin/users/${userId}/pushcut-urls`),

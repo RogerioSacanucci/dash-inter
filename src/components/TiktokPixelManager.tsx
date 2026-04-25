@@ -468,46 +468,91 @@ function LogsPanel() {
 }
 
 function LogRow({ log, expanded, onToggle }: { log: TiktokEventLog; expanded: boolean; onToggle: () => void }) {
+  const queryClient = useQueryClient();
+  const [retryMessage, setRetryMessage] = useState<string | null>(null);
+
   const detailQuery = useQuery({
     queryKey: ['tiktok-event-log', log.id],
     queryFn: () => api.tiktokEventLog(log.id),
     enabled: expanded,
   });
 
+  const retryMutation = useMutation({
+    mutationFn: () => api.retryTiktokEvent(log.id),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ['tiktok-event-logs'] });
+      setRetryMessage(res.data.success ? 'Reenviado com sucesso ✓' : `Reenviado mas falhou: ${res.data.tiktok_message ?? 'erro'}`);
+      window.setTimeout(() => setRetryMessage(null), 4000);
+    },
+    onError: (err) => {
+      setRetryMessage(err instanceof Error ? err.message : 'Erro ao reenviar');
+      window.setTimeout(() => setRetryMessage(null), 5000);
+    },
+  });
+
   return (
     <li className="bg-surface-2 border border-white/[0.06] rounded-xl">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-white/[0.02] transition-colors rounded-xl"
-        aria-expanded={expanded}
-      >
-        <StatusBadge success={log.success} httpStatus={log.http_status} />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-white truncate">
-              {log.pixel?.label ?? log.pixel?.pixel_code ?? 'Pixel removido'}
-            </span>
-            <span className="text-[11px] text-white/30 font-mono truncate">
-              order #{log.cartpanda_order_id}
-            </span>
-          </div>
-          {log.tiktok_message && (
-            <p className={`text-[11px] truncate mt-0.5 ${log.success ? 'text-white/40' : 'text-red-400'}`}>
-              {log.tiktok_message}
-            </p>
-          )}
-        </div>
-        <div className="shrink-0 text-right">
-          <div className="text-[11px] text-white/50 tabular-nums">{formatDate(log.created_at)}</div>
-          {log.request_id && (
-            <div className="text-[10px] font-mono text-white/30 truncate max-w-[140px]" title={log.request_id}>
-              {log.request_id.slice(0, 12)}…
+      <div className="flex items-center gap-3 px-4 py-2.5">
+        <button
+          type="button"
+          onClick={onToggle}
+          className="flex flex-1 items-center gap-3 text-left min-w-0 -mx-2 px-2 py-1 rounded-lg hover:bg-white/[0.02] transition-colors"
+          aria-expanded={expanded}
+        >
+          <StatusBadge success={log.success} httpStatus={log.http_status} tiktokCode={log.tiktok_code} />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-white truncate">
+                {log.pixel?.label ?? log.pixel?.pixel_code ?? 'Pixel removido'}
+              </span>
+              <span className="text-[11px] text-white/30 font-mono truncate">
+                order #{log.cartpanda_order_id}
+              </span>
             </div>
-          )}
+            {log.tiktok_message && (
+              <p className={`text-[11px] truncate mt-0.5 ${log.success ? 'text-white/40' : 'text-red-400'}`}>
+                {log.tiktok_message}
+              </p>
+            )}
+          </div>
+          <div className="shrink-0 text-right">
+            <div className="text-[11px] text-white/50 tabular-nums">{formatDate(log.created_at)}</div>
+            {log.request_id && (
+              <div className="text-[10px] font-mono text-white/30 truncate max-w-[140px]" title={log.request_id}>
+                {log.request_id.slice(0, 12)}…
+              </div>
+            )}
+          </div>
+          <span className={`shrink-0 transition-transform text-white/30 ${expanded ? 'rotate-90' : ''}`}>▸</span>
+        </button>
+        {!log.success && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); retryMutation.mutate(); }}
+            disabled={retryMutation.isPending}
+            className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] px-2.5 py-1.5 text-[11px] font-semibold text-white/70 hover:border-brand/40 hover:bg-brand-subtle hover:text-white transition-colors disabled:opacity-50"
+            aria-label="Reenviar evento"
+          >
+            {retryMutation.isPending ? (
+              <svg className="animate-spin" width="11" height="11" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25" />
+                <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+              </svg>
+            ) : (
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                <path d="M2 8a6 6 0 1 1 1.76 4.24M2 13v-3h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+            Reenviar
+          </button>
+        )}
+      </div>
+
+      {retryMessage && (
+        <div className={`px-4 pb-2 text-[11px] ${retryMessage.startsWith('Reenviado com sucesso') ? 'text-emerald-400' : 'text-amber-400'}`}>
+          {retryMessage}
         </div>
-        <span className={`shrink-0 transition-transform text-white/30 ${expanded ? 'rotate-90' : ''}`}>▸</span>
-      </button>
+      )}
 
       {expanded && (
         <div className="border-t border-white/[0.04] p-4 space-y-3 text-xs">
@@ -560,13 +605,16 @@ function CodeBlock({ label, data }: { label: string; data: Record<string, unknow
   );
 }
 
-function StatusBadge({ success, httpStatus }: { success: boolean; httpStatus: number | null }) {
+function StatusBadge({ success, httpStatus, tiktokCode }: { success: boolean; httpStatus: number | null; tiktokCode: number | null }) {
   const cls = success
     ? 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20'
     : 'bg-red-500/10 text-red-400 ring-red-500/20';
-  const label = success ? 'OK' : httpStatus ? String(httpStatus) : 'ERR';
+  let label = 'ERR';
+  if (success) label = 'OK';
+  else if (httpStatus !== null && (httpStatus < 200 || httpStatus >= 300)) label = String(httpStatus);
+  else if (tiktokCode !== null && tiktokCode !== 0) label = String(tiktokCode);
   return (
-    <span className={`shrink-0 inline-flex items-center justify-center min-w-[42px] px-2 py-1 rounded-md text-[10px] font-semibold tabular-nums ring-1 ${cls}`}>
+    <span className={`shrink-0 inline-flex items-center justify-center min-w-[48px] px-2 py-1 rounded-md text-[10px] font-semibold tabular-nums ring-1 ${cls}`}>
       {label}
     </span>
   );
