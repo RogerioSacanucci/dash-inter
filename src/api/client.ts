@@ -216,6 +216,44 @@ export interface CreateTiktokPixelPayload {
 }
 export type UpdateTiktokPixelPayload = Partial<CreateTiktokPixelPayload>;
 
+export interface TiktokEventLogPixelRef {
+  id: number;
+  pixel_code: string;
+  label: string | null;
+}
+
+export interface TiktokEventLog {
+  id: number;
+  pixel: TiktokEventLogPixelRef | null;
+  cartpanda_order_id: string;
+  event: string;
+  http_status: number | null;
+  tiktok_code: number | null;
+  tiktok_message: string | null;
+  request_id: string | null;
+  success: boolean;
+  created_at: string;
+}
+
+export interface TiktokEventLogDetail extends TiktokEventLog {
+  payload: Record<string, unknown> | null;
+  response: Record<string, unknown> | null;
+}
+
+export interface TiktokEventLogsResponse {
+  data: TiktokEventLog[];
+  meta: { total: number; page: number; per_page: number; pages: number };
+}
+
+export interface TiktokEventLogsFilters {
+  pixel_id?: number;
+  status?: 'success' | 'error';
+  order_id?: string;
+  date_from?: string;
+  date_to?: string;
+  page?: number;
+}
+
 // User-facing
 export interface UserLink {
   id: number;
@@ -622,6 +660,21 @@ export const api = {
     request<{ ok: boolean }>(`/api/tiktok-pixels/${id}`, {
       method: 'DELETE',
     }),
+
+  // TikTok Event Logs
+  tiktokEventLogs: (filters: TiktokEventLogsFilters = {}) => {
+    const q = new URLSearchParams();
+    if (filters.pixel_id)  q.set('pixel_id', String(filters.pixel_id));
+    if (filters.status)    q.set('status', filters.status);
+    if (filters.order_id)  q.set('order_id', filters.order_id);
+    if (filters.date_from) q.set('date_from', filters.date_from);
+    if (filters.date_to)   q.set('date_to', filters.date_to);
+    if (filters.page)      q.set('page', String(filters.page));
+    return request<TiktokEventLogsResponse>(`/api/tiktok-events?${q.toString()}`);
+  },
+
+  tiktokEventLog: (id: number) =>
+    request<{ data: TiktokEventLogDetail }>(`/api/tiktok-events/${id}`),
 
   // Admin — pushcut URLs
   adminPushcutUrls: (userId: number) =>

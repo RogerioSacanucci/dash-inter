@@ -3,6 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   api,
   CreateTiktokPixelPayload,
+  TiktokEventLog,
+  TiktokEventLogDetail,
+  TiktokEventLogsFilters,
   TiktokPixel,
   UpdateTiktokPixelPayload,
 } from '../api/client';
@@ -25,7 +28,38 @@ const emptyForm: FormState = {
 const inputClass =
   'w-full bg-surface-2 border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/20 outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition-colors';
 
+const filterInputClass =
+  'bg-surface-1 border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition-colors';
+
+type SubTab = 'pixels' | 'logs';
+
 export default function TiktokPixelManager() {
+  const [tab, setTab] = useState<SubTab>('pixels');
+
+  return (
+    <div className="space-y-4">
+      <div className="inline-flex gap-1 rounded-xl border border-white/[0.06] bg-surface-1 p-1">
+        {(['pixels', 'logs'] as const).map((key) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setTab(key)}
+            className={`h-8 rounded-lg px-3 text-xs font-semibold transition-colors ${
+              tab === key ? 'bg-brand text-white' : 'text-white/50 hover:text-white/80'
+            }`}
+          >
+            {key === 'pixels' ? 'Pixels' : 'Logs de eventos'}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'pixels' && <PixelsPanel />}
+      {tab === 'logs' && <LogsPanel />}
+    </div>
+  );
+}
+
+function PixelsPanel() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<FormState>(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -289,3 +323,266 @@ export default function TiktokPixelManager() {
     </div>
   );
 }
+
+function LogsPanel() {
+  const [filters, setFilters] = useState<TiktokEventLogsFilters>({ page: 1 });
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+
+  const pixelsQuery = useQuery({ queryKey: ['tiktok-pixels'], queryFn: () => api.tiktokPixels() });
+  const pixels = pixelsQuery.data?.data ?? [];
+
+  const logsQuery = useQuery({
+    queryKey: ['tiktok-event-logs', filters],
+    queryFn: () => api.tiktokEventLogs(filters),
+  });
+
+  const logs = logsQuery.data?.data ?? [];
+  const meta = logsQuery.data?.meta;
+
+  function setFilter<K extends keyof TiktokEventLogsFilters>(key: K, value: TiktokEventLogsFilters[K]) {
+    setFilters((f) => ({ ...f, [key]: value, page: 1 }));
+  }
+
+  function clearFilters() {
+    setFilters({ page: 1 });
+  }
+
+  const hasFilters = !!(filters.pixel_id || filters.status || filters.order_id || filters.date_from || filters.date_to);
+
+  return (
+    <div className="bg-surface-1 rounded-2xl p-6">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="font-semibold text-white">Logs de eventos</h2>
+          <p className="text-sm text-white/40 mt-0.5">
+            {meta ? `${meta.total} evento${meta.total === 1 ? '' : 's'} registrado${meta.total === 1 ? '' : 's'}` : 'Carregando…'}
+          </p>
+        </div>
+        <button
+          onClick={() => logsQuery.refetch()}
+          className="px-3 py-2 text-xs text-white/60 hover:text-white border border-white/[0.06] rounded-lg transition-colors"
+        >
+          Atualizar
+        </button>
+      </div>
+
+      <div className="mb-4 flex flex-wrap gap-2">
+        <select
+          value={filters.pixel_id ?? ''}
+          onChange={(e) => setFilter('pixel_id', e.target.value ? Number(e.target.value) : undefined)}
+          aria-label="Pixel"
+          className={filterInputClass}
+        >
+          <option value="">Todos os pixels</option>
+          {pixels.map((p) => (
+            <option key={p.id} value={p.id}>{p.label ?? p.pixel_code}</option>
+          ))}
+        </select>
+        <select
+          value={filters.status ?? ''}
+          onChange={(e) => setFilter('status', (e.target.value || undefined) as 'success' | 'error' | undefined)}
+          aria-label="Status"
+          className={filterInputClass}
+        >
+          <option value="">Todos status</option>
+          <option value="success">Sucesso</option>
+          <option value="error">Erro</option>
+        </select>
+        <input
+          type="text"
+          value={filters.order_id ?? ''}
+          onChange={(e) => setFilter('order_id', e.target.value || undefined)}
+          placeholder="Order ID..."
+          className={`${filterInputClass} w-36`}
+        />
+        <input
+          type="date"
+          value={filters.date_from ?? ''}
+          onChange={(e) => setFilter('date_from', e.target.value || undefined)}
+          aria-label="De"
+          className={filterInputClass}
+        />
+        <input
+          type="date"
+          value={filters.date_to ?? ''}
+          onChange={(e) => setFilter('date_to', e.target.value || undefined)}
+          aria-label="Até"
+          className={filterInputClass}
+        />
+        {hasFilters && (
+          <button
+            onClick={clearFilters}
+            className="px-3 py-2 text-sm text-white/40 hover:text-white/80 rounded-lg hover:bg-white/[0.05] transition-colors"
+          >
+            Limpar
+          </button>
+        )}
+      </div>
+
+      {logsQuery.isLoading ? (
+        <div className="text-sm text-white/20 py-8 text-center">Carregando…</div>
+      ) : logs.length === 0 ? (
+        <EmptyState
+          icon={EmptyIcons.notification}
+          message="Nenhum evento encontrado"
+          hint={hasFilters ? 'Tente ajustar os filtros' : 'Logs aparecem aqui após pagamentos confirmados'}
+        />
+      ) : (
+        <ul className="flex flex-col gap-1.5">
+          {logs.map((log) => (
+            <LogRow
+              key={log.id}
+              log={log}
+              expanded={expandedId === log.id}
+              onToggle={() => setExpandedId((id) => (id === log.id ? null : log.id))}
+            />
+          ))}
+        </ul>
+      )}
+
+      {meta && meta.pages > 1 && (
+        <div className="mt-4 flex items-center justify-between border-t border-white/[0.06] pt-3">
+          <span className="text-xs text-white/40 tabular-nums">
+            Página {meta.page} de {meta.pages}
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setFilters((f) => ({ ...f, page: Math.max(1, (f.page ?? 1) - 1) }))}
+              disabled={meta.page === 1}
+              className="px-3 py-1.5 text-xs text-white/50 hover:text-white border border-white/[0.06] rounded-lg disabled:opacity-30 transition-colors"
+            >
+              Anterior
+            </button>
+            <button
+              onClick={() => setFilters((f) => ({ ...f, page: Math.min(meta.pages, (f.page ?? 1) + 1) }))}
+              disabled={meta.page === meta.pages}
+              className="px-3 py-1.5 text-xs text-white/50 hover:text-white border border-white/[0.06] rounded-lg disabled:opacity-30 transition-colors"
+            >
+              Próxima
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LogRow({ log, expanded, onToggle }: { log: TiktokEventLog; expanded: boolean; onToggle: () => void }) {
+  const detailQuery = useQuery({
+    queryKey: ['tiktok-event-log', log.id],
+    queryFn: () => api.tiktokEventLog(log.id),
+    enabled: expanded,
+  });
+
+  return (
+    <li className="bg-surface-2 border border-white/[0.06] rounded-xl">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-white/[0.02] transition-colors rounded-xl"
+        aria-expanded={expanded}
+      >
+        <StatusBadge success={log.success} httpStatus={log.http_status} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-white truncate">
+              {log.pixel?.label ?? log.pixel?.pixel_code ?? 'Pixel removido'}
+            </span>
+            <span className="text-[11px] text-white/30 font-mono truncate">
+              order #{log.cartpanda_order_id}
+            </span>
+          </div>
+          {log.tiktok_message && (
+            <p className={`text-[11px] truncate mt-0.5 ${log.success ? 'text-white/40' : 'text-red-400'}`}>
+              {log.tiktok_message}
+            </p>
+          )}
+        </div>
+        <div className="shrink-0 text-right">
+          <div className="text-[11px] text-white/50 tabular-nums">{formatDate(log.created_at)}</div>
+          {log.request_id && (
+            <div className="text-[10px] font-mono text-white/30 truncate max-w-[140px]" title={log.request_id}>
+              {log.request_id.slice(0, 12)}…
+            </div>
+          )}
+        </div>
+        <span className={`shrink-0 transition-transform text-white/30 ${expanded ? 'rotate-90' : ''}`}>▸</span>
+      </button>
+
+      {expanded && (
+        <div className="border-t border-white/[0.04] p-4 space-y-3 text-xs">
+          {detailQuery.isLoading && <p className="text-white/40">Carregando detalhes…</p>}
+          {detailQuery.data && <DetailContent log={detailQuery.data.data} />}
+        </div>
+      )}
+    </li>
+  );
+}
+
+function DetailContent({ log }: { log: TiktokEventLogDetail }) {
+  return (
+    <>
+      <DetailGrid log={log} />
+      <CodeBlock label="Payload (resumo enviado)" data={log.payload} />
+      <CodeBlock label="Resposta TikTok" data={log.response} />
+    </>
+  );
+}
+
+function DetailGrid({ log }: { log: TiktokEventLogDetail }) {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+      <Metric label="HTTP" value={log.http_status?.toString() ?? '—'} />
+      <Metric label="Code TikTok" value={log.tiktok_code !== null ? String(log.tiktok_code) : '—'} />
+      <Metric label="Event" value={log.event} />
+      <Metric label="Order" value={log.cartpanda_order_id} mono />
+    </div>
+  );
+}
+
+function Metric({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="bg-surface-1 border border-white/[0.04] rounded-lg px-3 py-2">
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-white/40">{label}</div>
+      <div className={`text-white/80 truncate ${mono ? 'font-mono' : ''}`}>{value}</div>
+    </div>
+  );
+}
+
+function CodeBlock({ label, data }: { label: string; data: Record<string, unknown> | null }) {
+  return (
+    <div>
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-white/40 mb-1">{label}</div>
+      <pre className="bg-canvas border border-white/[0.04] rounded-lg p-3 overflow-x-auto text-[11px] text-white/70 font-mono">
+        {data ? JSON.stringify(data, null, 2) : '(vazio)'}
+      </pre>
+    </div>
+  );
+}
+
+function StatusBadge({ success, httpStatus }: { success: boolean; httpStatus: number | null }) {
+  const cls = success
+    ? 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20'
+    : 'bg-red-500/10 text-red-400 ring-red-500/20';
+  const label = success ? 'OK' : httpStatus ? String(httpStatus) : 'ERR';
+  return (
+    <span className={`shrink-0 inline-flex items-center justify-center min-w-[42px] px-2 py-1 rounded-md text-[10px] font-semibold tabular-nums ring-1 ${cls}`}>
+      {label}
+    </span>
+  );
+}
+
+function formatDate(iso: string): string {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString('pt-PT', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return iso;
+  }
+}
+
