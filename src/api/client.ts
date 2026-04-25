@@ -198,23 +198,47 @@ export interface CreatePushcutUrlPayload {
 }
 export type UpdatePushcutUrlPayload = Partial<CreatePushcutUrlPayload>;
 
+export interface TiktokOauthConnectionRef {
+  id: number;
+  bc_name: string | null;
+  bc_id: string | null;
+  status: 'active' | 'expired' | 'revoked';
+}
+
 export interface TiktokPixel {
   id: number;
   pixel_code: string;
   label: string | null;
   test_event_code: string | null;
   enabled: boolean;
+  has_access_token: boolean;
+  oauth_connection: TiktokOauthConnectionRef | null;
   created_at: string;
 }
 export interface TiktokPixelsResponse { data: TiktokPixel[]; }
 export interface CreateTiktokPixelPayload {
   pixel_code: string;
-  access_token: string;
+  access_token?: string;
+  tiktok_oauth_connection_id?: number | null;
   label?: string;
   test_event_code?: string;
   enabled?: boolean;
 }
 export type UpdateTiktokPixelPayload = Partial<CreateTiktokPixelPayload>;
+
+export interface TiktokOauthConnection {
+  id: number;
+  user: { id: number; email: string } | null;
+  bc_id: string | null;
+  bc_name: string | null;
+  advertiser_ids: string[];
+  scope: string[];
+  expires_at: string | null;
+  status: 'active' | 'expired' | 'revoked';
+  is_active: boolean;
+  created_at: string;
+}
+export interface TiktokOauthConnectionsResponse { data: TiktokOauthConnection[]; }
 
 export interface TiktokEventLogPixelRef {
   id: number;
@@ -681,6 +705,23 @@ export const api = {
       `/api/tiktok-events/${id}/retry`,
       { method: 'POST', body: JSON.stringify({}) },
     ),
+
+  // TikTok OAuth (BC-wide)
+  startTiktokOauth: () =>
+    request<{ authorize_url: string }>('/api/tiktok/oauth/start', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
+
+  tiktokOauthConnections: (userId?: number) => {
+    const q = userId ? `?user_id=${userId}` : '';
+    return request<TiktokOauthConnectionsResponse>(`/api/tiktok/oauth/connections${q}`);
+  },
+
+  deleteTiktokOauthConnection: (id: number) =>
+    request<{ ok: boolean }>(`/api/tiktok/oauth/connections/${id}`, {
+      method: 'DELETE',
+    }),
 
   // Admin — pushcut URLs
   adminPushcutUrls: (userId: number) =>

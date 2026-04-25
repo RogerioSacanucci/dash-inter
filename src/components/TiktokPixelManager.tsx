@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   api,
@@ -6,9 +6,11 @@ import {
   TiktokEventLog,
   TiktokEventLogDetail,
   TiktokEventLogsFilters,
+  TiktokOauthConnection,
   TiktokPixel,
   UpdateTiktokPixelPayload,
 } from '../api/client';
+import { useAuth } from '../hooks/useAuth';
 import { EmptyState, EmptyIcons } from './ui/EmptyState';
 
 interface FormState {
@@ -16,6 +18,7 @@ interface FormState {
   access_token: string;
   label: string;
   test_event_code: string;
+  tiktok_oauth_connection_id: number | null;
 }
 
 const emptyForm: FormState = {
@@ -23,6 +26,7 @@ const emptyForm: FormState = {
   access_token: '',
   label: '',
   test_event_code: '',
+  tiktok_oauth_connection_id: null,
 };
 
 const inputClass =
@@ -31,15 +35,30 @@ const inputClass =
 const filterInputClass =
   'bg-surface-1 border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition-colors';
 
-type SubTab = 'pixels' | 'logs';
+type SubTab = 'pixels' | 'connections' | 'logs';
+
+const SUB_TABS: { key: SubTab; label: string }[] = [
+  { key: 'pixels', label: 'Pixels' },
+  { key: 'connections', label: 'Conexões BC' },
+  { key: 'logs', label: 'Logs de eventos' },
+];
 
 export default function TiktokPixelManager() {
   const [tab, setTab] = useState<SubTab>('pixels');
 
+  // Auto-jump to connections tab if returning from OAuth callback
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const oauthStatus = params.get('tiktok_oauth');
+    if (oauthStatus) {
+      setTab('connections');
+    }
+  }, []);
+
   return (
     <div className="space-y-4">
       <div className="inline-flex gap-1 rounded-xl border border-white/[0.06] bg-surface-1 p-1">
-        {(['pixels', 'logs'] as const).map((key) => (
+        {SUB_TABS.map(({ key, label }) => (
           <button
             key={key}
             type="button"
@@ -48,12 +67,13 @@ export default function TiktokPixelManager() {
               tab === key ? 'bg-brand text-white' : 'text-white/50 hover:text-white/80'
             }`}
           >
-            {key === 'pixels' ? 'Pixels' : 'Logs de eventos'}
+            {label}
           </button>
         ))}
       </div>
 
       {tab === 'pixels' && <PixelsPanel />}
+      {tab === 'connections' && <ConnectionsPanel />}
       {tab === 'logs' && <LogsPanel />}
     </div>
   );
@@ -114,6 +134,7 @@ function PixelsPanel() {
       access_token: '',
       label: pixel.label ?? '',
       test_event_code: pixel.test_event_code ?? '',
+      tiktok_oauth_connection_id: pixel.oauth_connection?.id ?? null,
     });
     setError(null);
   }
@@ -125,7 +146,8 @@ function PixelsPanel() {
     if (editingId === null) {
       createMutation.mutate({
         pixel_code: form.pixel_code.trim(),
-        access_token: form.access_token,
+        access_token: form.access_token || undefined,
+        tiktok_oauth_connection_id: form.tiktok_oauth_connection_id,
         label: form.label.trim() || undefined,
         test_event_code: form.test_event_code.trim() || undefined,
       });
@@ -134,6 +156,7 @@ function PixelsPanel() {
 
     const payload: UpdateTiktokPixelPayload = {
       pixel_code: form.pixel_code.trim(),
+      tiktok_oauth_connection_id: form.tiktok_oauth_connection_id,
       label: form.label.trim() || undefined,
       test_event_code: form.test_event_code.trim() || undefined,
     };
@@ -148,7 +171,14 @@ function PixelsPanel() {
     deleteMutation.mutate(pixel.id);
   }
 
+  const connectionsQuery = useQuery({
+    queryKey: ['tiktok-oauth-connections'],
+    queryFn: () => api.tiktokOauthConnections(),
+  });
+  const connections = connectionsQuery.data?.data ?? [];
+
   const saving = createMutation.isPending || updateMutation.isPending;
+  const usingOauth = form.tiktok_oauth_connection_id !== null;
 
   return (
     <div className="flex gap-4 flex-wrap">
@@ -157,7 +187,7 @@ function PixelsPanel() {
           {editingId === null ? 'Adicionar pixel TikTok' : 'Editar pixel TikTok'}
         </h2>
         <p className="text-sm text-white/40 mb-6">
-          Cada pixel dispara um evento CompletePayment ao pagar. Credenciais vêm do TikTok Ads Manager.
+          Use uma <b className="text-white/60">conexão BC</b> (recomendado, escopo BC inteira) ou cole o <b className="text-white/60">access token do pixel</b>.
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
@@ -183,15 +213,41 @@ function PixelsPanel() {
           </div>
 
           <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-white/40 uppercase tracking-widest" htmlFor="tt-conn">
+              Conexão BC <span className="normal-case font-normal text-white/30">(recomendado)</span>
+            </label>
+            <select
+              id="tt-conn"
+              value={form.tiktok_oauth_connection_id ?? ''}
+              onChange={(e) => setForm((f) => ({ ...f, tiktok_oauth_connection_id: e.target.value ? Number(e.target.value) : null }))}
+              className={inputClass}
+            >
+              <option value="">Não usar — colar access token abaixo</option>
+              {connections.filter((c) => c.is_active).map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.bc_name ?? `BC ${c.bc_id ?? c.id}`}
+                </option>
+              ))}
+            </select>
+            {connections.length === 0 && (
+              <p className="text-[11px] text-white/30">Nenhuma conexão BC. Vá na aba "Conexões BC" pra criar uma.</p>
+            )}
+          </div>
+
+          <div className={`flex flex-col gap-1.5 ${usingOauth ? 'opacity-50' : ''}`}>
             <label className="text-xs font-semibold text-white/40 uppercase tracking-widest" htmlFor="tt-access-token">
               Access Token{editingId !== null && (
                 <span className="normal-case font-normal text-white/30"> (deixe em branco para manter)</span>
+              )}
+              {usingOauth && (
+                <span className="normal-case font-normal text-white/30"> — não necessário com conexão BC</span>
               )}
             </label>
             <input
               id="tt-access-token"
               type="password"
-              required={editingId === null}
+              required={editingId === null && !usingOauth}
+              disabled={usingOauth}
               value={form.access_token}
               onChange={(e) => setForm((f) => ({ ...f, access_token: e.target.value }))}
               placeholder="••••••••••"
@@ -273,11 +329,26 @@ function PixelsPanel() {
                   <p className={`text-xs font-mono truncate ${pixel.label ? 'text-white/40' : 'text-white/70'}`}>
                     {pixel.pixel_code}
                   </p>
-                  {pixel.test_event_code && (
-                    <p className="text-[11px] text-yellow-400/70 mt-0.5">
-                      Teste: {pixel.test_event_code}
-                    </p>
-                  )}
+                  <div className="flex flex-wrap gap-1 mt-0.5">
+                    {pixel.oauth_connection ? (
+                      <span className="inline-flex items-center gap-1 rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
+                        BC: {pixel.oauth_connection.bc_name ?? pixel.oauth_connection.bc_id ?? '—'}
+                      </span>
+                    ) : pixel.has_access_token ? (
+                      <span className="inline-flex items-center rounded bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/50">
+                        Token direto
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400">
+                        Sem credencial
+                      </span>
+                    )}
+                    {pixel.test_event_code && (
+                      <span className="inline-flex items-center rounded bg-yellow-500/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-yellow-400/80">
+                        Teste: {pixel.test_event_code}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <button
                   type="button"
@@ -321,6 +392,172 @@ function PixelsPanel() {
         )}
       </div>
     </div>
+  );
+}
+
+function ConnectionsPanel() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+  const [filterUserId, setFilterUserId] = useState<number | undefined>(undefined);
+  const [banner, setBanner] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
+
+  // React to OAuth callback redirect query string
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('tiktok_oauth');
+    if (status === 'connected') {
+      setBanner({ kind: 'success', text: 'Conexão BC criada com sucesso ✓' });
+    } else if (status === 'error') {
+      const reason = params.get('reason') ?? 'desconhecido';
+      setBanner({ kind: 'error', text: `Erro ao conectar BC: ${reason}` });
+    }
+    if (status) {
+      // Clean up the URL
+      params.delete('tiktok_oauth');
+      params.delete('reason');
+      params.delete('connection');
+      const newSearch = params.toString();
+      const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : '');
+      window.history.replaceState({}, '', newUrl);
+      queryClient.invalidateQueries({ queryKey: ['tiktok-oauth-connections'] });
+      window.setTimeout(() => setBanner(null), 6000);
+    }
+  }, [queryClient]);
+
+  const adminUsersQuery = useQuery({
+    queryKey: ['admin-users-light'],
+    queryFn: () => api.users(),
+    enabled: isAdmin,
+  });
+  const adminUsers = adminUsersQuery.data?.users ?? [];
+
+  const connectionsQuery = useQuery({
+    queryKey: ['tiktok-oauth-connections', filterUserId],
+    queryFn: () => api.tiktokOauthConnections(filterUserId),
+  });
+  const connections = connectionsQuery.data?.data ?? [];
+
+  const startMutation = useMutation({
+    mutationFn: () => api.startTiktokOauth(),
+    onSuccess: (res) => {
+      window.location.href = res.authorize_url;
+    },
+    onError: (err) => {
+      setBanner({ kind: 'error', text: err instanceof Error ? err.message : 'Erro ao iniciar OAuth' });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => api.deleteTiktokOauthConnection(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tiktok-oauth-connections'] }),
+  });
+
+  function handleDelete(c: TiktokOauthConnection) {
+    if (!confirm(`Remover conexão "${c.bc_name ?? c.bc_id ?? `#${c.id}`}"? Pixels que usam essa conexão precisarão de outra credencial.`)) return;
+    deleteMutation.mutate(c.id);
+  }
+
+  return (
+    <div className="bg-surface-1 rounded-2xl p-6">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="font-semibold text-white">Conexões BC</h2>
+          <p className="text-sm text-white/40 mt-0.5">
+            Autorize seu Business Center via OAuth — token cobre todos os pixels da BC com permissão correta.
+          </p>
+        </div>
+        <button
+          onClick={() => startMutation.mutate()}
+          disabled={startMutation.isPending}
+          className="px-4 py-2 bg-brand hover:bg-brand-hover disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors"
+        >
+          {startMutation.isPending ? 'Abrindo TikTok…' : '+ Conectar BC'}
+        </button>
+      </div>
+
+      {banner && (
+        <div className={`mb-4 px-4 py-3 rounded-xl text-sm border ${
+          banner.kind === 'success'
+            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+            : 'bg-red-500/10 border-red-500/20 text-red-400'
+        }`}>
+          {banner.text}
+        </div>
+      )}
+
+      {isAdmin && adminUsers.length > 0 && (
+        <div className="mb-4 flex items-center gap-2">
+          <label className="text-xs font-semibold uppercase tracking-wider text-white/40">Usuário:</label>
+          <select
+            value={filterUserId ?? ''}
+            onChange={(e) => setFilterUserId(e.target.value ? Number(e.target.value) : undefined)}
+            className={filterInputClass}
+          >
+            <option value="">Todos</option>
+            {adminUsers.map((u) => (
+              <option key={u.id} value={u.id}>{u.email}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {connectionsQuery.isLoading ? (
+        <div className="text-sm text-white/20 py-8 text-center">Carregando…</div>
+      ) : connections.length === 0 ? (
+        <EmptyState
+          icon={EmptyIcons.notification}
+          message="Nenhuma conexão BC"
+          hint="Conecte seu Business Center pra desbloquear pixels com permissão BC-wide"
+        />
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {connections.map((c) => (
+            <li key={c.id} className="flex items-center gap-3 bg-surface-2 border border-white/[0.06] rounded-xl px-4 py-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-medium text-white truncate">
+                    {c.bc_name ?? `BC ${c.bc_id ?? `#${c.id}`}`}
+                  </span>
+                  <StatusPill status={c.status} isActive={c.is_active} />
+                  {isAdmin && c.user && (
+                    <span className="text-[11px] text-white/40 font-mono">{c.user.email}</span>
+                  )}
+                </div>
+                <div className="text-[11px] text-white/40 mt-0.5">
+                  {c.advertiser_ids.length} advertiser(s)
+                  {c.bc_id && <> · bc:{c.bc_id}</>}
+                  {c.expires_at && <> · expira {new Date(c.expires_at).toLocaleDateString('pt-PT')}</>}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleDelete(c)}
+                disabled={deleteMutation.isPending}
+                className="shrink-0 px-3 py-1 text-xs text-red-400 hover:text-red-300 border border-white/[0.06] hover:border-red-400/40 rounded-lg transition-colors disabled:opacity-50"
+              >
+                Remover
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function StatusPill({ status, isActive }: { status: 'active' | 'expired' | 'revoked'; isActive: boolean }) {
+  const cls = isActive
+    ? 'bg-emerald-500/10 text-emerald-400'
+    : status === 'expired'
+      ? 'bg-amber-500/10 text-amber-400'
+      : 'bg-red-500/10 text-red-400';
+  const label = isActive ? 'ativa' : status === 'expired' ? 'expirada' : 'revogada';
+  return (
+    <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${cls}`}>
+      <span className="h-1 w-1 rounded-full bg-current" />
+      {label}
+    </span>
   );
 }
 
