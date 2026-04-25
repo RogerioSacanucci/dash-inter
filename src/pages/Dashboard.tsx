@@ -12,6 +12,7 @@ import StatsCards from '../components/StatsCards';
 import Chart from '../components/Chart';
 import ShopBalancesCard from '../components/ShopBalancesCard';
 import OrdersDonutChart from '../components/OrdersDonutChart';
+import TiktokRoasCard from '../components/TiktokRoasCard';
 import { SkeletonStatsCards, SkeletonCartpandaStats, SkeletonChart } from '../components/ui/Skeleton';
 import { FetchingIndicator } from '../components/ui/FetchingIndicator';
 
@@ -293,6 +294,9 @@ export default function Dashboard() {
               secondaryLabel="pedidos"
             />
           </div>
+
+          {/* TikTok ROAS card — hidden when nothing to show */}
+          <TiktokRoasCard dateFrom={dateFrom} dateTo={dateTo} userId={selectedAccount} />
 
           {/* Donut + balances row */}
           {shopBalances.length > 1 ? (

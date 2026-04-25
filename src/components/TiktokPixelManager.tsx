@@ -234,6 +234,11 @@ function PixelsPanel() {
             )}
           </div>
 
+          <PixelValidationHint
+            connectionId={form.tiktok_oauth_connection_id}
+            pixelCode={form.pixel_code}
+          />
+
           <div className={`flex flex-col gap-1.5 ${usingOauth ? 'opacity-50' : ''}`}>
             <label className="text-xs font-semibold text-white/40 uppercase tracking-widest" htmlFor="tt-access-token">
               Access Token{editingId !== null && (
@@ -349,6 +354,7 @@ function PixelsPanel() {
                       </span>
                     )}
                   </div>
+                  {pixel.oauth_connection && <PixelStatsLine pixelId={pixel.id} />}
                 </div>
                 <button
                   type="button"
@@ -392,6 +398,66 @@ function PixelsPanel() {
         )}
       </div>
     </div>
+  );
+}
+
+function PixelStatsLine({ pixelId }: { pixelId: number }) {
+  const query = useQuery({
+    queryKey: ['tiktok-pixel-stats', pixelId],
+    queryFn: () => api.tiktokPixelStats(pixelId, 7),
+    staleTime: 5 * 60_000,
+    retry: 0,
+  });
+  if (query.isLoading) return <p className="text-[10px] text-white/20 mt-0.5">…</p>;
+  const data = query.data?.data;
+  if (!data || data.unavailable || !data.events) return null;
+  const events = Object.entries(data.events).sort((a, b) => b[1] - a[1]).slice(0, 4);
+  if (events.length === 0) return <p className="text-[10px] text-white/30 mt-0.5">7d: nenhum evento</p>;
+  return (
+    <p className="text-[10px] text-white/40 mt-0.5">
+      7d: {events.map(([name, count]) => `${name} ${count}`).join(' · ')}
+    </p>
+  );
+}
+
+function PixelValidationHint({
+  connectionId,
+  pixelCode,
+}: {
+  connectionId: number | null;
+  pixelCode: string;
+}) {
+  const trimmed = pixelCode.trim();
+  const valid = connectionId !== null && trimmed.length >= 8;
+
+  const query = useQuery({
+    queryKey: ['tiktok-validate-pixel', connectionId, trimmed],
+    queryFn: () => api.validateTiktokPixel(connectionId as number, trimmed),
+    enabled: valid,
+    staleTime: 60_000,
+    retry: 0,
+  });
+
+  if (!valid) return null;
+  if (query.isLoading) {
+    return <p className="text-[11px] text-white/40">Validando pixel na BC…</p>;
+  }
+  if (query.error) {
+    return <p className="text-[11px] text-red-400">Erro ao validar: {query.error instanceof Error ? query.error.message : 'erro'}</p>;
+  }
+  const data = query.data?.data;
+  if (!data) return null;
+  if (data.valid) {
+    return (
+      <p className="text-[11px] text-emerald-400">
+        ✓ Pixel encontrado em <b>{data.advertiser_name}</b>
+      </p>
+    );
+  }
+  return (
+    <p className="text-[11px] text-amber-400">
+      ⚠ Pixel não acessível por essa conexão BC. Vai dar 40001.
+    </p>
   );
 }
 
@@ -513,35 +579,176 @@ function ConnectionsPanel() {
       ) : (
         <ul className="flex flex-col gap-2">
           {connections.map((c) => (
-            <li key={c.id} className="flex items-center gap-3 bg-surface-2 border border-white/[0.06] rounded-xl px-4 py-3">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-medium text-white truncate">
-                    {c.bc_name ?? `BC ${c.bc_id ?? `#${c.id}`}`}
-                  </span>
-                  <StatusPill status={c.status} isActive={c.is_active} />
-                  {isAdmin && c.user && (
-                    <span className="text-[11px] text-white/40 font-mono">{c.user.email}</span>
-                  )}
-                </div>
-                <div className="text-[11px] text-white/40 mt-0.5">
-                  {c.advertiser_ids.length} advertiser(s)
-                  {c.bc_id && <> · bc:{c.bc_id}</>}
-                  {c.expires_at && <> · expira {new Date(c.expires_at).toLocaleDateString('pt-PT')}</>}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => handleDelete(c)}
-                disabled={deleteMutation.isPending}
-                className="shrink-0 px-3 py-1 text-xs text-red-400 hover:text-red-300 border border-white/[0.06] hover:border-red-400/40 rounded-lg transition-colors disabled:opacity-50"
-              >
-                Remover
-              </button>
-            </li>
+            <ConnectionRow
+              key={c.id}
+              connection={c}
+              isAdmin={isAdmin}
+              onDelete={() => handleDelete(c)}
+              deletePending={deleteMutation.isPending}
+            />
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+function ConnectionRow({
+  connection,
+  isAdmin,
+  onDelete,
+  deletePending,
+}: {
+  connection: TiktokOauthConnection;
+  isAdmin: boolean;
+  onDelete: () => void;
+  deletePending: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <li className="bg-surface-2 border border-white/[0.06] rounded-xl">
+      <div className="flex items-center gap-3 px-4 py-3">
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          className="flex flex-1 items-center gap-3 text-left min-w-0 -mx-2 px-2 py-1 rounded-lg hover:bg-white/[0.02] transition-colors"
+        >
+          <span className={`shrink-0 transition-transform text-white/30 ${expanded ? 'rotate-90' : ''}`}>▸</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-medium text-white truncate">
+                {connection.bc_name ?? `BC ${connection.bc_id ?? `#${connection.id}`}`}
+              </span>
+              <StatusPill status={connection.status} isActive={connection.is_active} />
+              {isAdmin && connection.user && (
+                <span className="text-[11px] text-white/40 font-mono">{connection.user.email}</span>
+              )}
+            </div>
+            <div className="text-[11px] text-white/40 mt-0.5">
+              {connection.advertiser_ids.length} advertiser(s)
+              {connection.bc_id && <> · bc:{connection.bc_id}</>}
+              {connection.expires_at && <> · expira {new Date(connection.expires_at).toLocaleDateString('pt-PT')}</>}
+            </div>
+          </div>
+        </button>
+        <button
+          type="button"
+          onClick={onDelete}
+          disabled={deletePending}
+          className="shrink-0 px-3 py-1 text-xs text-red-400 hover:text-red-300 border border-white/[0.06] hover:border-red-400/40 rounded-lg transition-colors disabled:opacity-50"
+        >
+          Remover
+        </button>
+      </div>
+      {expanded && <ConnectionDiscoverTree connectionId={connection.id} />}
+    </li>
+  );
+}
+
+function ConnectionDiscoverTree({ connectionId }: { connectionId: number }) {
+  const queryClient = useQueryClient();
+  const [busyPixel, setBusyPixel] = useState<string | null>(null);
+
+  const discover = useQuery({
+    queryKey: ['tiktok-discover', connectionId],
+    queryFn: () => api.discoverTiktokConnection(connectionId),
+  });
+
+  const trackMutation = useMutation({
+    mutationFn: ({ pixelCode, label }: { pixelCode: string; label?: string }) =>
+      api.trackTiktokPixel(connectionId, pixelCode, label),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tiktok-discover', connectionId] });
+      queryClient.invalidateQueries({ queryKey: ['tiktok-pixels'] });
+    },
+    onSettled: () => setBusyPixel(null),
+  });
+
+  const untrackMutation = useMutation({
+    mutationFn: (id: number) => api.deleteTiktokPixel(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tiktok-discover', connectionId] });
+      queryClient.invalidateQueries({ queryKey: ['tiktok-pixels'] });
+    },
+    onSettled: () => setBusyPixel(null),
+  });
+
+  if (discover.isLoading) {
+    return <div className="border-t border-white/[0.04] px-4 py-3 text-xs text-white/40">Carregando pixels da BC…</div>;
+  }
+  if (discover.error) {
+    return <div className="border-t border-white/[0.04] px-4 py-3 text-xs text-red-400">Erro: {discover.error instanceof Error ? discover.error.message : 'desconhecido'}</div>;
+  }
+
+  const advertisers = discover.data?.data.advertisers ?? [];
+  if (advertisers.length === 0) {
+    return <div className="border-t border-white/[0.04] px-4 py-3 text-xs text-white/40">Nenhum advertiser acessível por essa conexão.</div>;
+  }
+
+  return (
+    <div className="border-t border-white/[0.04] px-4 py-3 space-y-2">
+      {advertisers.map((adv) => (
+        <div key={adv.advertiser_id} className="bg-surface-1 border border-white/[0.04] rounded-lg p-3">
+          <div className="flex items-center justify-between gap-2 flex-wrap mb-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-[13px] font-medium text-white truncate">{adv.name}</span>
+              <span className="text-[10px] font-mono text-white/30">id:{adv.advertiser_id}</span>
+            </div>
+            {adv.balance !== null && (
+              <span className={`shrink-0 text-[11px] font-semibold tabular-nums px-2 py-0.5 rounded ${
+                adv.balance < 50 ? 'bg-amber-500/10 text-amber-400' : 'bg-emerald-500/10 text-emerald-400'
+              }`}>
+                {adv.currency} {adv.balance.toFixed(2)}
+              </span>
+            )}
+          </div>
+          {adv.pixels.length === 0 ? (
+            <p className="text-[11px] text-white/30">Nenhum pixel neste advertiser.</p>
+          ) : (
+            <ul className="space-y-1">
+              {adv.pixels.map((p) => {
+                const busy = busyPixel === p.pixel_code;
+                return (
+                  <li key={p.pixel_code} className="flex items-center gap-2 text-[12px]">
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={p.tracked}
+                      disabled={busy}
+                      onClick={() => {
+                        setBusyPixel(p.pixel_code);
+                        if (p.tracked && p.tracked_pixel_id) {
+                          untrackMutation.mutate(p.tracked_pixel_id);
+                        } else {
+                          trackMutation.mutate({ pixelCode: p.pixel_code, label: p.name || undefined });
+                        }
+                      }}
+                      className={`shrink-0 relative w-8 h-4 rounded-full transition-colors disabled:opacity-50 ${
+                        p.tracked ? 'bg-brand' : 'bg-white/10'
+                      }`}
+                      aria-label={`${p.tracked ? 'Desvincular' : 'Vincular'} pixel ${p.name || p.pixel_code}`}
+                    >
+                      <span
+                        className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${
+                          p.tracked ? 'translate-x-4' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                    <span className="text-white truncate flex-1 min-w-0">
+                      {p.name || <span className="text-white/40 italic">sem nome</span>}
+                      <span className="ml-2 text-[10px] font-mono text-white/30">{p.pixel_code}</span>
+                    </span>
+                    {p.tracked && (
+                      <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-emerald-400">rastreado</span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      ))}
     </div>
   );
 }

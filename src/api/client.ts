@@ -240,6 +240,71 @@ export interface TiktokOauthConnection {
 }
 export interface TiktokOauthConnectionsResponse { data: TiktokOauthConnection[]; }
 
+export interface TiktokDiscoveredPixel {
+  pixel_code: string;
+  name: string;
+  mode: string;
+  created_at: string;
+  tracked: boolean;
+  tracked_pixel_id: number | null;
+}
+
+export interface TiktokDiscoveredAdvertiser {
+  advertiser_id: string;
+  name: string;
+  currency: string;
+  balance: number | null;
+  status: string;
+  pixels: TiktokDiscoveredPixel[];
+}
+
+export interface TiktokDiscoverResponse {
+  data: { advertisers: TiktokDiscoveredAdvertiser[] };
+}
+
+export interface TiktokValidatePixelResponse {
+  data: {
+    valid: boolean;
+    advertiser_id: string | null;
+    advertiser_name: string | null;
+    name: string | null;
+  };
+}
+
+export interface TiktokPixelStatsResponse {
+  data: {
+    events?: Record<string, number>;
+    days?: number;
+    unavailable?: 'no_oauth_connection' | 'pixel_not_in_connection';
+    error?: string;
+  };
+}
+
+export interface TiktokRoasResponse {
+  data: {
+    date_from: string;
+    date_to: string;
+    total_spend: number;
+    total_revenue: number;
+    orders: number;
+    roas: number | null;
+    currency: string;
+    by_advertiser: Array<{
+      advertiser_id: string;
+      name: string;
+      spend: number;
+      currency: string;
+      connection_id: number;
+    }>;
+    by_day: Array<{
+      date: string;
+      spend: number;
+      revenue: number;
+      roas: number | null;
+    }>;
+  };
+}
+
 export interface TiktokEventLogPixelRef {
   id: number;
   pixel_code: string;
@@ -722,6 +787,35 @@ export const api = {
     request<{ ok: boolean }>(`/api/tiktok/oauth/connections/${id}`, {
       method: 'DELETE',
     }),
+
+  discoverTiktokConnection: (id: number) =>
+    request<TiktokDiscoverResponse>(`/api/tiktok/oauth/connections/${id}/discover`),
+
+  validateTiktokPixel: (connectionId: number, pixelCode: string) =>
+    request<TiktokValidatePixelResponse>(`/api/tiktok/oauth/connections/${connectionId}/validate-pixel`, {
+      method: 'POST',
+      body: JSON.stringify({ pixel_code: pixelCode }),
+    }),
+
+  trackTiktokPixel: (connectionId: number, pixelCode: string, label?: string) =>
+    request<{ data: { id: number; pixel_code: string; label: string | null } }>(
+      `/api/tiktok/oauth/connections/${connectionId}/track-pixel`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ pixel_code: pixelCode, label }),
+      },
+    ),
+
+  tiktokPixelStats: (id: number, days = 7) =>
+    request<TiktokPixelStatsResponse>(`/api/tiktok-pixels/${id}/stats?days=${days}`),
+
+  tiktokRoas: (params: { date_from?: string; date_to?: string; user_id?: number } = {}) => {
+    const q = new URLSearchParams();
+    if (params.date_from) q.set('date_from', params.date_from);
+    if (params.date_to) q.set('date_to', params.date_to);
+    if (params.user_id) q.set('user_id', String(params.user_id));
+    return request<TiktokRoasResponse>(`/api/tiktok/reports/roas?${q.toString()}`);
+  },
 
   // Admin — pushcut URLs
   adminPushcutUrls: (userId: number) =>
