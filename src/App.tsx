@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import CartpandaOrders from './pages/CartpandaOrders';
 import Settings from './pages/Settings';
+import Tiktok from './pages/Tiktok';
 import Links from './pages/Links';
 import LinkEditor from './pages/LinkEditor';
 import CartpandaShops from './pages/admin/CartpandaShops';
@@ -84,6 +85,7 @@ export default function App() {
           <Route path="transactions" element={<Transactions />} />
           <Route path="internacional-orders" element={<CartpandaOrders />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="tiktok" element={<Tiktok />} />
           <Route path="links" element={<Links />} />
           <Route path="admin/internacional-shops" element={<AdminGuard><CartpandaShops /></AdminGuard>} />
           <Route path="admin/internacional-shops/:id" element={<AdminGuard><CartpandaShopDetail /></AdminGuard>} />

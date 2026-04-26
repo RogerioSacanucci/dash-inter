@@ -17,6 +17,7 @@ import settingsIcon from "../icons/settings.json";
 import logoutIcon from "../icons/logout.json";
 import menuIcon from "../icons/menu.json";
 import mailIcon from "../icons/mail.json";
+import tiktokIcon from "../icons/tiktok.json";
 
 const NAV_ICON_SIZE = 18;
 const NAV_COLOR_ACTIVE = "#E8552A";
@@ -153,6 +154,17 @@ export default function Layout() {
               )}
             </div>
           )}
+
+          <div className="mt-2">
+            <GroupHeader label="Marketing" />
+            <NavItem
+              to="/tiktok"
+              label="TikTok"
+              end={false}
+              icon={tiktokIcon}
+              onClick={closeSidebar}
+            />
+          </div>
 
           <div className="mt-2">
             <GroupHeader label="Financeiro" />
