@@ -220,8 +220,8 @@ export interface CreateTiktokPixelPayload {
   pixel_code: string;
   access_token?: string;
   tiktok_oauth_connection_id?: number | null;
-  label?: string;
-  test_event_code?: string;
+  label?: string | null;
+  test_event_code?: string | null;
   enabled?: boolean;
 }
 export type UpdateTiktokPixelPayload = Partial<CreateTiktokPixelPayload>;

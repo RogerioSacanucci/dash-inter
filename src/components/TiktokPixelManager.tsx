@@ -148,8 +148,8 @@ function PixelsPanel() {
         pixel_code: form.pixel_code.trim(),
         access_token: form.access_token || undefined,
         tiktok_oauth_connection_id: form.tiktok_oauth_connection_id,
-        label: form.label.trim() || undefined,
-        test_event_code: form.test_event_code.trim() || undefined,
+        label: form.label.trim() || null,
+        test_event_code: form.test_event_code.trim() || null,
       });
       return;
     }
@@ -157,8 +157,8 @@ function PixelsPanel() {
     const payload: UpdateTiktokPixelPayload = {
       pixel_code: form.pixel_code.trim(),
       tiktok_oauth_connection_id: form.tiktok_oauth_connection_id,
-      label: form.label.trim() || undefined,
-      test_event_code: form.test_event_code.trim() || undefined,
+      label: form.label.trim() || null,
+      test_event_code: form.test_event_code.trim() || null,
     };
     if (form.access_token) {
       payload.access_token = form.access_token;
