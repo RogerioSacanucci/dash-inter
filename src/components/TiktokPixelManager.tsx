@@ -675,80 +675,108 @@ function ConnectionDiscoverTree({ connectionId }: { connectionId: number }) {
   });
 
   if (discover.isLoading) {
-    return <div className="border-t border-white/[0.04] px-4 py-3 text-xs text-white/40">Carregando pixels da BC…</div>;
+    return <div className="border-t border-white/[0.04] px-4 py-3 text-xs text-white/40">Carregando…</div>;
   }
   if (discover.error) {
     return <div className="border-t border-white/[0.04] px-4 py-3 text-xs text-red-400">Erro: {discover.error instanceof Error ? discover.error.message : 'desconhecido'}</div>;
   }
 
   const advertisers = discover.data?.data.advertisers ?? [];
-  if (advertisers.length === 0) {
-    return <div className="border-t border-white/[0.04] px-4 py-3 text-xs text-white/40">Nenhum advertiser acessível por essa conexão.</div>;
-  }
+  const pixels = discover.data?.data.pixels ?? [];
 
   return (
-    <div className="border-t border-white/[0.04] px-4 py-3 space-y-2">
-      {advertisers.map((adv) => (
-        <div key={adv.advertiser_id} className="bg-surface-1 border border-white/[0.04] rounded-lg p-3">
-          <div className="flex items-center justify-between gap-2 flex-wrap mb-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-[13px] font-medium text-white truncate">{adv.name}</span>
-              <span className="text-[10px] font-mono text-white/30">id:{adv.advertiser_id}</span>
-            </div>
-            {adv.balance !== null && (
-              <span className={`shrink-0 text-[11px] font-semibold tabular-nums px-2 py-0.5 rounded ${
-                adv.balance < 50 ? 'bg-amber-500/10 text-amber-400' : 'bg-emerald-500/10 text-emerald-400'
-              }`}>
-                {adv.currency} {adv.balance.toFixed(2)}
-              </span>
-            )}
-          </div>
-          {adv.pixels.length === 0 ? (
-            <p className="text-[11px] text-white/30">Nenhum pixel neste advertiser.</p>
-          ) : (
-            <ul className="space-y-1">
-              {adv.pixels.map((p) => {
-                const busy = busyPixel === p.pixel_code;
-                return (
-                  <li key={p.pixel_code} className="flex items-center gap-2 text-[12px]">
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={p.tracked}
-                      disabled={busy}
-                      onClick={() => {
-                        setBusyPixel(p.pixel_code);
-                        if (p.tracked && p.tracked_pixel_id) {
-                          untrackMutation.mutate(p.tracked_pixel_id);
-                        } else {
-                          trackMutation.mutate({ pixelCode: p.pixel_code, label: p.name || undefined });
-                        }
-                      }}
-                      className={`shrink-0 relative w-8 h-4 rounded-full transition-colors disabled:opacity-50 ${
-                        p.tracked ? 'bg-brand' : 'bg-white/10'
-                      }`}
-                      aria-label={`${p.tracked ? 'Desvincular' : 'Vincular'} pixel ${p.name || p.pixel_code}`}
-                    >
-                      <span
-                        className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${
-                          p.tracked ? 'translate-x-4' : 'translate-x-0'
-                        }`}
-                      />
-                    </button>
-                    <span className="text-white truncate flex-1 min-w-0">
-                      {p.name || <span className="text-white/40 italic">sem nome</span>}
-                      <span className="ml-2 text-[10px] font-mono text-white/30">{p.pixel_code}</span>
-                    </span>
-                    {p.tracked && (
-                      <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-emerald-400">rastreado</span>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+    <div className="border-t border-white/[0.04] p-4 space-y-4">
+      <div>
+        <div className="flex items-baseline justify-between mb-2">
+          <h3 className="text-[11px] font-semibold uppercase tracking-widest text-white/40">
+            Pixels da BC ({pixels.length} {pixels.length === 1 ? 'único' : 'únicos'})
+          </h3>
+          <p className="text-[10px] text-white/30">Atribuição via ttclid — não precisa selecionar advertiser</p>
         </div>
-      ))}
+        {pixels.length === 0 ? (
+          <p className="text-[12px] text-white/30">Nenhum pixel acessível.</p>
+        ) : (
+          <ul className="space-y-1.5">
+            {pixels.map((p) => {
+              const busy = busyPixel === p.pixel_code;
+              return (
+                <li key={p.pixel_code} className="flex items-center gap-3 bg-surface-1 border border-white/[0.04] rounded-lg px-3 py-2 text-[12.5px]">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={p.tracked}
+                    disabled={busy}
+                    onClick={() => {
+                      setBusyPixel(p.pixel_code);
+                      if (p.tracked && p.tracked_pixel_id) {
+                        untrackMutation.mutate(p.tracked_pixel_id);
+                      } else {
+                        trackMutation.mutate({ pixelCode: p.pixel_code, label: p.name || undefined });
+                      }
+                    }}
+                    className={`shrink-0 relative w-9 h-5 rounded-full transition-colors disabled:opacity-50 ${
+                      p.tracked ? 'bg-brand' : 'bg-white/10'
+                    }`}
+                    aria-label={`${p.tracked ? 'Desvincular' : 'Vincular'} pixel ${p.name || p.pixel_code}`}
+                  >
+                    <span
+                      className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
+                        p.tracked ? 'translate-x-4' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-white truncate">
+                      {p.name || <span className="text-white/40 italic">sem nome</span>}
+                    </div>
+                    <div className="text-[10px] font-mono text-white/30 truncate">{p.pixel_code}</div>
+                  </div>
+                  <div className="shrink-0 flex items-center gap-2">
+                    {p.shared_with_count > 1 && (
+                      <span className="text-[10px] text-white/40">
+                        em {p.shared_with_count} advertisers
+                      </span>
+                    )}
+                    {p.tracked && (
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400">rastreado</span>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      <div>
+        <h3 className="text-[11px] font-semibold uppercase tracking-widest text-white/40 mb-2">
+          Advertisers ({advertisers.length})
+        </h3>
+        {advertisers.length === 0 ? (
+          <p className="text-[12px] text-white/30">Nenhum advertiser nesta conexão.</p>
+        ) : (
+          <div className="grid gap-1.5 sm:grid-cols-2">
+            {advertisers.map((adv) => (
+              <div
+                key={adv.advertiser_id}
+                className="flex items-center justify-between gap-2 bg-surface-1 border border-white/[0.04] rounded-lg px-3 py-2 text-[12px]"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="text-white truncate">{adv.name}</div>
+                  <div className="text-[10px] font-mono text-white/30 truncate">id:{adv.advertiser_id}</div>
+                </div>
+                {adv.balance !== null && (
+                  <span className={`shrink-0 text-[11px] font-semibold tabular-nums px-2 py-0.5 rounded ${
+                    adv.balance < 50 ? 'bg-amber-500/10 text-amber-400' : 'bg-emerald-500/10 text-emerald-400'
+                  }`}>
+                    {adv.currency} {adv.balance.toFixed(2)}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

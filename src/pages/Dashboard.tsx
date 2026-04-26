@@ -296,7 +296,13 @@ export default function Dashboard() {
           </div>
 
           {/* TikTok ROAS card — hidden when nothing to show */}
-          <TiktokRoasCard dateFrom={dateFrom} dateTo={dateTo} userId={selectedAccount} />
+          <TiktokRoasCard
+            period={period}
+            dateFrom={dateFrom}
+            dateTo={dateTo}
+            utcOffset={utcOffset}
+            userId={selectedAccount}
+          />
 
           {/* Donut + balances row */}
           {shopBalances.length > 1 ? (

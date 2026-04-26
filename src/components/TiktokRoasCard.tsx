@@ -3,19 +3,23 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
 
 interface Props {
+  period: string;
   dateFrom: string;
   dateTo: string;
+  utcOffset: number;
   userId?: string;
 }
 
-export default function TiktokRoasCard({ dateFrom, dateTo, userId }: Props) {
+export default function TiktokRoasCard({ period, dateFrom, dateTo, utcOffset, userId }: Props) {
   const params = useMemo(
     () => ({
+      period: period || undefined,
       date_from: dateFrom || undefined,
       date_to: dateTo || undefined,
+      utc_offset: utcOffset,
       user_id: userId ? Number(userId) : undefined,
     }),
-    [dateFrom, dateTo, userId],
+    [period, dateFrom, dateTo, utcOffset, userId],
   );
 
   const { data, isLoading, error } = useQuery({

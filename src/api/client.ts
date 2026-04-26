@@ -245,6 +245,7 @@ export interface TiktokDiscoveredPixel {
   name: string;
   mode: string;
   created_at: string;
+  shared_with_count: number;
   tracked: boolean;
   tracked_pixel_id: number | null;
 }
@@ -255,11 +256,13 @@ export interface TiktokDiscoveredAdvertiser {
   currency: string;
   balance: number | null;
   status: string;
-  pixels: TiktokDiscoveredPixel[];
 }
 
 export interface TiktokDiscoverResponse {
-  data: { advertisers: TiktokDiscoveredAdvertiser[] };
+  data: {
+    advertisers: TiktokDiscoveredAdvertiser[];
+    pixels: TiktokDiscoveredPixel[];
+  };
 }
 
 export interface TiktokValidatePixelResponse {
@@ -809,11 +812,13 @@ export const api = {
   tiktokPixelStats: (id: number, days = 7) =>
     request<TiktokPixelStatsResponse>(`/api/tiktok-pixels/${id}/stats?days=${days}`),
 
-  tiktokRoas: (params: { date_from?: string; date_to?: string; user_id?: number } = {}) => {
+  tiktokRoas: (params: { period?: string; date_from?: string; date_to?: string; user_id?: number; utc_offset?: number } = {}) => {
     const q = new URLSearchParams();
+    if (params.period) q.set('period', params.period);
     if (params.date_from) q.set('date_from', params.date_from);
     if (params.date_to) q.set('date_to', params.date_to);
     if (params.user_id) q.set('user_id', String(params.user_id));
+    if (params.utc_offset !== undefined) q.set('utc_offset', String(params.utc_offset));
     return request<TiktokRoasResponse>(`/api/tiktok/reports/roas?${q.toString()}`);
   },
 
